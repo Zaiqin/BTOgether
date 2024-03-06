@@ -2,8 +2,8 @@
   "name": "apartmate",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://homes.hdb.gov.sg",
-  "__proxy": "http://datamall2.mytransport.sg",
+  "__proxy": "https://homes.hdb.gov.sg",
+  "proxy": "http://datamall2.mytransport.sg",
   "_proxy": "https://data.gov.sg",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
