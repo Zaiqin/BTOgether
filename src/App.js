@@ -57,7 +57,7 @@ function App() {
     if (/^\d{1,5}$/.test(busStopCode.trim())) { // Check if busStopCode is 1-5 digits
       const getBusTime = async () => {
         try {
-          const response = await fetch(`/ltaodataservice/BusArrivalv2?BusStopCode=${busStopCode}`, requestOptions);
+          const response = await fetch(`http://datamall2.mytransport.sg/ltaodataservice/BusArrivalv2?BusStopCode=${busStopCode}`, requestOptions);
           console.log(response)
           const data = await response.json(); // Parse JSON response
           console.log(data);
