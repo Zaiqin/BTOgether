@@ -214,7 +214,7 @@ function App() {
 
     <hr />
     {/* LTA Datamall Test */}
-    <label>Enter Bus Stop Code: </label>
+    {/*<label>Enter Bus Stop Code: </label>
     <input type="text" value={busStopCode} onChange={(event) => setBusStopCode(event.target.value)}/>
     <br />
 
@@ -242,7 +242,7 @@ function App() {
       </tbody>
     </table>
     </ul>
-    </div>
+        </div>*/}
     
     </div>
     );
