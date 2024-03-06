@@ -58,6 +58,7 @@ function App() {
       const getBusTime = async () => {
         try {
           const response = await fetch(`/ltaodataservice/BusArrivalv2?BusStopCode=${busStopCode}`, requestOptions);
+          console.log(response)
           const data = await response.json(); // Parse JSON response
           console.log(data);
           setBusServices(data.Services);
