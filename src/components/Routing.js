@@ -8,6 +8,20 @@ const Routing = ({ startLat, startLng, endLat, endLng, apiKey, mapRef }) => {
   const [routeData, setRouteData] = useState();
 
   useEffect(() => {
+    if (startLat == null || startLng == null || endLat == null || endLng == null) {
+      if (mapRef.current) {
+        mapRef.current.eachLayer((layer) => {
+          if (layer instanceof L.Polyline && layer.options.className === "publictransport") {
+            mapRef.current.removeLayer(layer);
+          }
+        });
+      }
+      routeDrawnRef.current = false
+      setRouteData(null)
+    }
+  }, [startLat, startLng, endLat, endLng])
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(`https://transit.router.hereapi.com/v8/routes`, {
@@ -20,7 +34,7 @@ const Routing = ({ startLat, startLng, endLat, endLng, apiKey, mapRef }) => {
         });
         drawRoute(response.data.routes[0]);
         setRouteData(response.data.routes[0]);
-        console.log(routeData)
+        //console.log(routeData)
 
       } catch (error) {
         setErrorMessage('Error fetching route data');
