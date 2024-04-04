@@ -1,10 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { auth } from '../utils/firebase';
-import { getFirestore, collection, addDoc, updateDoc, getDocs, onSnapshot } from 'firebase/firestore';
-import { query, where } from 'firebase/firestore';
-import { Button, Typography, FormControl, InputLabel, TextField, Select, MenuItem, Container, InputAdornment, Stack, Grid } from '@mui/material';
-import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { Typography, FormControl, InputLabel, Select, MenuItem, Container, Stack, Grid } from '@mui/material';
 import Divider from '@mui/material/Divider';
 
 import UserDataUtility from '../utils/UserDataUtility';
