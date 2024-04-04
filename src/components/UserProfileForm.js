@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { auth } from '../utils/firebase';
 import { getFirestore, collection, addDoc, updateDoc, getDocs, onSnapshot } from 'firebase/firestore';
 import { query, where } from 'firebase/firestore';
-import { Button, Typography, FormControl, InputLabel, TextField, Select, MenuItem, Container, InputAdornment } from '@mui/material';
+import { Button, Typography, FormControl, InputLabel, TextField, Select, MenuItem, Container, InputAdornment, Stack } from '@mui/material';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { TileLayer, Marker, MapContainer, useMap } from "react-leaflet";
@@ -11,6 +11,8 @@ import MapDialog from './MapDialog';
 import { Icon } from "leaflet";
 import { Toaster, toast } from 'sonner'
 import DeleteAccountDialog from './DeleteAccountDialog';
+
+import UserDataUtility from '../utils/UserDataUtility';
 
 const UserProfileForm = () => {
   // init services
@@ -155,6 +157,36 @@ const UserProfileForm = () => {
     return null;
   }
 
+  // Load Data using Utility
+  const [loadedData, setLoadedData] = useState(null);
+
+  // To load the data into the useState above
+  const handleLoadedData = (data) => {
+      console.log("Loaded data:", data);
+      setLoadedData(data);
+  };
+
+  const dataUtilityRef = useRef(null);
+  // myData Object to add, modify or delete
+  var myData = {
+    salary: '1',
+    parentsAddress: { address: '', latitude: null, longitude: null },
+    workplaceLocation: { address: 'Changi Business Park Central 1', latitude: 1.33411, longitude: 103.96271 }
+  }
+
+  myData.maritalStatus = 'Married' // Adding fields
+  delete myData.parentsAddress  // Delete fields
+
+  // Function created in parent component to call Utility save function
+  const funcA = () => {
+    dataUtilityRef.current.saveUserData();
+  }
+
+  // Function created in parent component to call Utility load function
+  const funcB = () => {
+    dataUtilityRef.current.loadUserData();
+  }
+
   return (
     <Container>
       <Toaster toastOptions={{
@@ -198,6 +230,7 @@ const UserProfileForm = () => {
             value={formData.salary}
             InputProps={{
               startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              inputProps: { min: 0 }
             }}
             fullWidth
             sx={{ mb: 2 }}
@@ -207,9 +240,9 @@ const UserProfileForm = () => {
           <MapDialog type="parentsAddress" locationInfo={(homeLocation) => addressUpdate("parentAddress", homeLocation)} />
         </div>
         <Typography style={{ marginBottom: '10px' }}>
-          {formData.parentsAddress.address!='' && "New Parent's Address: " + formData.parentsAddress.address}
+          {formData.parentsAddress.address!=='' && "New Parent's Address: " + formData.parentsAddress.address}
         </Typography>
-        <div style={{ marginBottom: '20px' }}>
+        {prefs[0]?.parentsAddress &&<div style={{ marginBottom: '20px' }}>
           <Accordion sx={{ border: 1, borderColor: 'silver', borderRadius: 1 }}>
             <AccordionSummary
               expandIcon={<ArrowDropDownIcon />}
@@ -233,7 +266,7 @@ const UserProfileForm = () => {
                   layerName='mapLayer'
                 />
                 {/* This is for the parents marker */}
-                {parentAddressCenter && (
+                {parentAddressCenter && prefs[0]?.parentsAddress && (
                   <Marker position={[parentAddressCenter[0], parentAddressCenter[1]]} layerName="home" icon={homeIcon} draggable={false}>
                     {/* Popup for home marker */}
                   </Marker>
@@ -242,14 +275,14 @@ const UserProfileForm = () => {
               </MapContainer>
             </AccordionDetails>
           </Accordion>
-        </div>
+        </div>}
         <div style={{ marginBottom: '5px' }}>
           <MapDialog type="workplaceAddress" locationInfo={(homeLocation) => addressUpdate("workplaceAddress", homeLocation)} />
         </div>
         <Typography style={{ marginBottom: '10px' }}>
-          {formData.workplaceLocation.address!='' && "New Workplace Address: " + formData.workplaceLocation.address}
+          {formData.workplaceLocation.address!=='' && "New Workplace Address: " + formData.workplaceLocation.address}
         </Typography>
-        <div style={{ marginBottom: '20px' }}>
+        {prefs[0]?.workplaceLocation && <div style={{ marginBottom: '20px' }}>
           <Accordion sx={{ border: 1, borderColor: 'silver', borderRadius: 1 }}>
             <AccordionSummary
               expandIcon={<ArrowDropDownIcon />}
@@ -273,7 +306,7 @@ const UserProfileForm = () => {
                   layerName='mapLayer'
                 />
                 {/* This is for the workplace marker */}
-                {workplaceAddressCenter && (
+                {workplaceAddressCenter && prefs[0]?.workplaceLocation && (
                   <Marker position={[workplaceAddressCenter[0], workplaceAddressCenter[1]]} layerName="home" icon={homeIcon} draggable={false}>
                     {/* Popup for home marker */}
                   </Marker>
@@ -282,10 +315,15 @@ const UserProfileForm = () => {
               </MapContainer>
             </AccordionDetails>
           </Accordion>
-        </div>
+        </div>}
+        <Stack spacing={{ xs: 1 }} direction="row" useFlexGap flexWrap="wrap">
         <Button variant="outlined" onClick={clearFields} sx={{ mr: 1, boxShadow: 1 }}>Clear Fields</Button>
         <Button type="submit" variant="contained" sx={{ mr: 1, boxShadow: 1 }}>Update Profile</Button>
         <DeleteAccountDialog/>
+        <Button variant="contained" sx={{ mr: 1, boxShadow: 1 }} onClick={funcA}>Save Data</Button>
+        <Button variant="contained" sx={{ mr: 1, boxShadow: 1 }} onClick={funcB}>Load Data</Button>
+        <UserDataUtility ref={dataUtilityRef} saveData={myData} loadedData={handleLoadedData} />
+        </Stack>
       </form>
     </Container>
 
