@@ -1,9 +1,10 @@
-import AppRouter from './routes/route';
+import AppRouter from "./routes/route";
+import "./css/global.css";
 
 function App() {
   return (
     <main>
-      <AppRouter/>
+      <AppRouter />
     </main>
   );
 }

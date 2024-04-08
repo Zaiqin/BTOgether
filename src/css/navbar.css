@@ -1,7 +1,6 @@
 /* Your existing CSS */
-
 .active {
-  background-color:  #a12419;
+  background-color: #a12419;
 }
 
 /* Navbar styles */
@@ -14,7 +13,7 @@
   margin: 0 auto;
   border-bottom: 1px solid #f7776b;
   position: relative;
-   /* Add this line */
+  /* Add this line */
 }
 
 .navbar .title-heading {
@@ -61,8 +60,8 @@
     border-bottom: 1px solid #ecf0f1;
   }
 
-  .navbar .links.open  {
-    display:flex ;
+  .navbar .links.open {
+    display: flex;
     width: 100%;
   }
 
@@ -70,8 +69,6 @@
     display: flex;
     margin-left: auto;
   }
-
 }
 
 /* Your existing CSS */
-
