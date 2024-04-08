@@ -438,12 +438,12 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
 
   useEffect(() => {
     if (data && data.parentsAddress && data.latitude && data.longitude) {
-      //fetchPublicTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsTime);
-      //fetchTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsCarTime);
+      fetchPublicTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsTime);
+      fetchTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsCarTime);
     }
     if (data && data.workplaceLocation && data.latitude && data.longitude) {
-      //fetchPublicTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkTime);
-      //fetchTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkCarTime);
+      fetchPublicTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkTime);
+      fetchTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkCarTime);
     }
     if (data) {
       getNearest(mrtgeojson).then((obj) => {
