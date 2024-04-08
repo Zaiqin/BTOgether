@@ -142,9 +142,9 @@ const Comparison = forwardRef(({ saveData }, ref) => {
   const handleLoadedData = (data) => {
     console.log("Loaded data:", data);
     data.BTO1 = {
-      address: "Jurong Area",
-      latitude: 1.33,
-      longitude: 103.7392,
+      address: data.homeAddress,
+      latitude: data.homeLatitude,
+      longitude: data.homeLongitude,
     };
     data.BTO2 = {
       address: "NTU Area",
@@ -436,15 +436,14 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
     }
   };
 
-  // Enable this to turn on routing, turn off to save tokens
   useEffect(() => {
     if (data && data.parentsAddress && data.latitude && data.longitude) {
-      fetchPublicTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsTime);
-      fetchTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsCarTime);
+      //fetchPublicTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsTime);
+      //fetchTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsCarTime);
     }
     if (data && data.workplaceLocation && data.latitude && data.longitude) {
-      fetchPublicTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkTime);
-      fetchTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkCarTime);
+      //fetchPublicTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkTime);
+      //fetchTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkCarTime);
     }
     if (data) {
       getNearest(mrtgeojson).then((obj) => {
