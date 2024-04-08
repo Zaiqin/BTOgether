@@ -7,7 +7,6 @@ const OneCodeButton = ({ stationCode }) => {
   const [text, setText] = useState("white");
 
   useEffect(() => {
-    console.log(stationCode)
     if (stationCode.includes("NS")) {
         setBg("#d42e12"); setText("white");
     } else if (stationCode.includes("EW") || stationCode.includes("CG")) {
@@ -53,7 +52,6 @@ const ManyCodeButton = ({ stationCode }) => {
     const [textColors, setTextColors] = useState([]);
   
     useEffect(() => {
-        console.log(stationCode)
       const stationSegments = stationCode.split('/');
       const segmentColors = stationSegments.map(segment => {
         if (segment.includes("NS")) {

@@ -141,23 +141,27 @@ const Comparison = forwardRef(({ saveData }, ref) => {
   // To load the data into the useState above
   const handleLoadedData = (data) => {
     console.log("Loaded data:", data);
-    data.BTO1 = {
-      address: data.homeAddress,
-      latitude: data.homeLatitude,
-      longitude: data.homeLongitude,
-    };
-    data.BTO2 = {
-      address: "NTU Area",
-      latitude: 1.3506,
-      longitude: 103.6963,
-    };
-    data.BTO3 = {
-      address: "Marsiling Lane",
-      latitude: 1.44455,
-      longitude: 103.77608,
-    };
-    console.log("Setting data:", data);
-    setLoadedData(data);
+    if (data) {
+      data.BTO1 = {
+        address: data.homeAddress,
+        latitude: data.homeLatitude,
+        longitude: data.homeLongitude,
+      };
+      data.BTO2 = {
+        address: "NTU Area",
+        latitude: 1.3506,
+        longitude: 103.6963,
+      };
+      data.BTO3 = {
+        address: "Marsiling Lane",
+        latitude: 1.44455,
+        longitude: 103.77608,
+      };
+      console.log("Setting data:", data);
+      setLoadedData(data);
+    } else {
+      console.log("No data found"); 
+    }
   };
 
   const fieldLabels = {
@@ -206,6 +210,7 @@ const Comparison = forwardRef(({ saveData }, ref) => {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Panel
+                allData={loadedData}
                 data={leftData}
                 fieldLabels={fieldLabels}
                 selection={leftSelection}
@@ -214,6 +219,7 @@ const Comparison = forwardRef(({ saveData }, ref) => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Panel
+                allData={loadedData}
                 data={rightData}
                 fieldLabels={fieldLabels}
                 selection={rightSelection}
@@ -229,7 +235,7 @@ const Comparison = forwardRef(({ saveData }, ref) => {
 
 export default Comparison;
 
-const Panel = ({ data, fieldLabels, selection, onChange }) => {
+const Panel = ({ allData, data, fieldLabels, selection, onChange }) => {
   const [parentsTime, setParentsTime] = useState(null);
   const [parentsCarTime, setParentsCarTime] = useState(null);
   const [workTime, setWorkTime] = useState(null);
@@ -350,7 +356,7 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
                 return true; // Show all if no home marker is set
               const distanceFromHome = getDistanceFromLatLonInKm(
                 data.latitude, data.longitude, marker.geocode[0], marker.geocode[1]);
-              return distanceFromHome <= 2; // 2 for 1km
+              return distanceFromHome <= 1; // 1 for 1km
             });
           return newMarkers.length; // Return the count of newMarkers
         })
@@ -437,15 +443,15 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
   };
 
   useEffect(() => {
-    if (data && data.parentsAddress && data.latitude && data.longitude) {
-      fetchPublicTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsTime);
-      fetchTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsCarTime);
-    }
-    if (data && data.workplaceLocation && data.latitude && data.longitude) {
-      fetchPublicTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkTime);
-      fetchTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkCarTime);
-    }
-    if (data) {
+    if (data && selection) {
+      if (data.parentsAddress && data.latitude && data.longitude) {
+        fetchPublicTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsTime);
+        fetchTransport(data.parentsAddress.latitude,data.parentsAddress.longitude,setParentsCarTime);
+      }
+      if (data.workplaceLocation && data.latitude && data.longitude) {
+        fetchPublicTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkTime);
+        fetchTransport(data.workplaceLocation.latitude,data.workplaceLocation.longitude,setWorkCarTime);
+      }
       getNearest(mrtgeojson).then((obj) => {
         setNearestStation({name: extractNameFromHtml(obj.obj), dist: obj.dist.toFixed(2), stationCode: obj.stationCode})
       });
@@ -490,21 +496,21 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
       }}
       style={{ background: "white" }}
     >
-      <FormControl fullWidth>
-        <InputLabel style={{ background: "white" }}>Choose a BTO</InputLabel>
+      <FormControl fullWidth disabled={allData === null}>
+        <InputLabel style={{ background: "white" }}>{allData === null ? "No BTO Saved" : "Choose a BTO"}
+        </InputLabel>
         <Select
           label="Choose a BTO"
           onChange={onChange}
           value={selection}
           sx={{ mb: 2 }}
-          style={{ background: "white" }}
-        >
-          <MenuItem value="BTO 1">BTO 1</MenuItem>
-          <MenuItem value="BTO 2">BTO 2</MenuItem>
-          <MenuItem value="BTO 3">BTO 3</MenuItem>
+          style={{ background: "white" }}>
+        {allData && allData.BTO1 && <MenuItem value="BTO 1">BTO 1</MenuItem>}
+        {allData && allData.BTO2 && <MenuItem value="BTO 2">BTO 2</MenuItem>}
+        {allData && allData.BTO3 && <MenuItem value="BTO 3">BTO 3</MenuItem>}
         </Select>
       </FormControl>
-      {data ? (
+      {data && selection ? (
         <Stack spacing={2}>
           <Divider
             orientation="horizontal"
@@ -589,7 +595,7 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
             style={{ background: "gray" }}
           />
           <Typography variant="h7" sx={{ fontWeight: "bold" }}>
-            Amenities within 2km: {Object.values(amenities).reduce(
+            Amenities within 1km: {Object.values(amenities).reduce(
               (accumulator, currentValue) => accumulator + (currentValue || 0), // Use 0 if the value is null
               0
             )}
@@ -618,9 +624,9 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
             style={{ background: "gray" }}
           />
           <Typography variant="h7" sx={{ fontWeight: "bold" }}>
-            Parents' Address:
+            Parents' Address: {data.parentsAddress === undefined ? "Not specified" : ""}
           </Typography>
-          <Stack
+          {data.parentsAddress !== undefined && (<Stack
             divider={
               <Divider
                 orientation="horizontal"
@@ -665,16 +671,16 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
               </Typography>
               <Typography>{parentsTime}</Typography>
             </Stack>
-          </Stack>
+          </Stack>)}
           <Divider
             orientation="horizontal"
             flexItem
             style={{ background: "gray" }}
           />
           <Typography variant="h7" sx={{ fontWeight: "bold" }}>
-            Workplace Address:
+            Workplace Address: {data.workplaceLocation === undefined ? "Not specified" : ""}
           </Typography>
-          <Stack
+          {data.workplaceLocation !== undefined && (<Stack
             divider={
               <Divider
                 orientation="horizontal"
@@ -719,10 +725,10 @@ const Panel = ({ data, fieldLabels, selection, onChange }) => {
               </Typography>
               <Typography>{workTime}</Typography>
             </Stack>
-          </Stack>
+          </Stack>)}
         </Stack>
       ) : (
-        <Typography variant="h7">Choose a BTO to Compare</Typography>
+        <Typography variant="h7">{allData===null? "Tip: Head to BTOFind to Save a BTO": "Choose a BTO to Compare"}</Typography>
       )}
     </Container>
   );
