@@ -143,16 +143,22 @@ const Comparison = forwardRef(({ saveData }, ref) => {
     console.log("Loaded data:", data);
     if (data) {
       data.BTO1 = {
+        projectname: "My House 1",
+        numberofrooms: "5-room",
         address: data.homeAddress,
         latitude: data.homeLatitude,
         longitude: data.homeLongitude,
       };
       data.BTO2 = {
+        projectname: "My Other House",
+        numberofrooms: "5-room",
         address: "NTU Area",
         latitude: 1.3506,
         longitude: 103.6963,
       };
       data.BTO3 = {
+        projectname: "Kinda not want this house",
+        numberofrooms: "5-room",
         address: "Marsiling Lane",
         latitude: 1.44455,
         longitude: 103.77608,
@@ -165,6 +171,8 @@ const Comparison = forwardRef(({ saveData }, ref) => {
   };
 
   const fieldLabels = {
+    projectname: "Project Name",
+    numberofrooms: "Room Type",
     address: "Address",
     latitude: "Latitude",
     longitude: "Longitude",
@@ -542,7 +550,7 @@ const Panel = ({ allData, data, fieldLabels, selection, onChange }) => {
             }
             spacing={1}
           >
-            {["address", "latitude", "longitude"].map((key) => (
+            {["projectname","numberofrooms","address", "latitude", "longitude"].map((key) => (
               <React.Fragment key={key}>
                 {data && data[key] && (
                   <Stack spacing={0}>

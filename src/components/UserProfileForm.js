@@ -29,7 +29,6 @@ import MapDialog from "./MapDialog";
 import { Icon } from "leaflet";
 import { Toaster, toast } from "sonner";
 import DeleteAccountDialog from "./DeleteAccountDialog";
-import UserDataUtility from "../utils/UserDataUtility";
 
 const UserProfileForm = () => {
   // init services
@@ -42,7 +41,7 @@ const UserProfileForm = () => {
   });
 
   const [prefs, setPrefs] = useState([]);
-
+  const [loadedData, setLoadedData] = useState()
   const [formData, setFormData] = useState({
     maritalStatus: "",
     salary: "",
@@ -60,6 +59,20 @@ const UserProfileForm = () => {
           prefsData.push({ ...doc.data(), id: doc.id });
         });
         setPrefs(prefsData);
+        setLoadedData({
+          maritalStatus: prefsData[0].maritalStatus,
+          salary: prefsData[0].salary,
+          parentsAddress: {
+            address: prefsData[0].parentsAddress ? prefsData[0].parentsAddress.address : "",
+            latitude: prefsData[0].parentsAddress ? prefsData[0].parentsAddress.latitude : null,
+            longitude: prefsData[0].parentsAddress ? prefsData[0].parentsAddress.longitude : null
+          },
+          workplaceLocation: {
+            address: prefsData[0].workplaceLocation ? prefsData[0].workplaceLocation.address : "",
+            latitude: prefsData[0].workplaceLocation ? prefsData[0].workplaceLocation.address : null,
+            longitude: prefsData[0].workplaceLocation ? prefsData[0].workplaceLocation.address : null,
+          }
+        })
         if (!prefsData) {
           if (prefsData[0].salary !== null) {
             setFormData(prevState => ({ ...prevState, salary: prefsData[0].salary }));
@@ -108,65 +121,85 @@ const UserProfileForm = () => {
     });
   };
 
+  function check(loaded, form) {
+    // Marital Status
+    if (form.maritalStatus != "" && (form.maritalStatus != loaded.maritalStatus)) return true
+    // Salary
+    if (form.salary != "" && (form.salary != loaded.salary)) return true
+    // Parents Address
+    if (form.parentsAddress.latitude != null) return true
+    // Workplace Address
+    if (form.workplaceLocation.latitude != null) return true
+    return false
+  }
+
   const handleSubmit = async (e) => {
     console.log("pressed submit");
     e.preventDefault();
     const q = query(colRef, where("email", "==", auth.currentUser.email));
 
-    // Initialize an object to store updated data
-    let updatedData = {};
+    const result = check(loadedData, formData)
+    if (result) {
+      // Initialize an object to store updated data
+      let updatedData = {};
 
-    // Iterate through formData to find changed fields
-    for (const key in formData) {
-      if (formData.hasOwnProperty(key)) {
-        const fieldValue = formData[key];
-        if (key === "parentsAddress" || key === "workplaceLocation") {
-          // For objects (addresses), check if the 'address' property is not empty
-          if (fieldValue.address.trim() !== "") {
-            // Field has value, add it to updatedData
-            updatedData[key] = fieldValue;
-          }
-        } else {
-          // For other fields, check if the value is not empty
-          if (fieldValue && fieldValue.trim() !== "") {
-            // Field has value, add it to updatedData
-            updatedData[key] = fieldValue;
+      // Iterate through formData to find changed fields
+      for (const key in formData) {
+        if (formData.hasOwnProperty(key)) {
+          const fieldValue = formData[key];
+          if (key === "parentsAddress" || key === "workplaceLocation") {
+            // For objects (addresses), check if the 'address' property is not empty
+            if (fieldValue.address.trim() !== "") {
+              // Field has value, add it to updatedData
+              updatedData[key] = fieldValue;
+            }
+          } else {
+            // For other fields, check if the value is not empty
+            if (fieldValue && fieldValue.trim() !== "") {
+              // Field has value, add it to updatedData
+              updatedData[key] = fieldValue;
+            }
           }
         }
       }
-    }
 
-    try {
-      // Continue with updating or adding document
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0].ref;
-        updateDoc(doc, updatedData)
-          .then(() => {
-            console.log("Updated User Preferences!");
-            toast.success("Updated User Preferences!", {
-              position: "top-center",
+      try {
+        // Continue with updating or adding document
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0].ref;
+          updateDoc(doc, updatedData)
+            .then(() => {
+              console.log("Updated User Preferences!");
+              toast.success("Updated User Preferences!", {
+                position: "top-center",
+              });
+            })
+            .catch((error) => {
+              console.error("Error updating document:", error);
             });
-          })
-          .catch((error) => {
-            console.error("Error updating document:", error);
-          });
-      } else {
-        console.log("Creating document for user");
-        const addData = { email: auth.currentUser.email, ...updatedData };
-        addDoc(colRef, addData)
-          .then(() => {
-            console.log("Saved User Preferences!");
-            toast.success("Saved User Preferences!", {
-              position: "top-center",
+        } else {
+          console.log("Creating document for user");
+          const addData = { email: auth.currentUser.email, ...updatedData };
+          addDoc(colRef, addData)
+            .then(() => {
+              console.log("Saved User Preferences!");
+              toast.success("Saved User Preferences!", {
+                position: "top-center",
+              });
+            })
+            .catch((error) => {
+              console.error("Error adding document:", error);
             });
-          })
-          .catch((error) => {
-            console.error("Error adding document:", error);
-          });
+        }
+        setFormData((prevState) => ({
+          ...prevState,
+          parentsAddress: { address: "", latitude: null, longitude: null },
+          workplaceLocation: { address: "", latitude: null, longitude: null },
+        }));
+      } catch (error) {
+        console.error("Error submitting:", error);
       }
-    } catch (error) {
-      console.error("Error submitting:", error);
     }
   };
 
@@ -200,8 +233,8 @@ const UserProfileForm = () => {
     <Container>
       <Toaster
         toastOptions={{
-          style: { border: "2px green solid" },
-          duration: 3000,
+          style: { border: "2px green solid", background: "#D6EDD9" },
+          duration: 1500,
         }}
         richColors
       />
@@ -211,7 +244,7 @@ const UserProfileForm = () => {
         <div style={{ marginBottom: "5px" }}>
           <div style={{ marginBottom: "20px", marginTop: "15px" }}>
             <Typography variant="h7">
-              Marital Status: {prefs[0] && prefs[0].maritalStatus}
+              Marital Status: {prefs[0] && (prefs[0].maritalStatus ? prefs[0].maritalStatus : "Not specified")}
             </Typography>
           </div>
           <FormControl fullWidth>
@@ -223,7 +256,6 @@ const UserProfileForm = () => {
               name="maritalStatus"
               sx={{ mb: 2 }}
             >
-              <MenuItem value="None">None</MenuItem>
               <MenuItem value="Single">Single</MenuItem>
               <MenuItem value="Married">Married</MenuItem>
               <MenuItem value="Divorced">Divorced</MenuItem>
@@ -233,7 +265,7 @@ const UserProfileForm = () => {
         </div>
         <div style={{ marginBottom: "20px" }}>
           <Typography variant="h7">
-            Salary: ${prefs[0] && prefs[0].salary}
+            Salary: {prefs[0] && (prefs[0].salary ? "$" + prefs[0].salary : "Not specified")}
           </Typography>
         </div>
         <div style={{ marginBottom: "5px" }}>
