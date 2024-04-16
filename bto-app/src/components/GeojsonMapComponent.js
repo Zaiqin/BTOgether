@@ -9,6 +9,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import { Icon } from "leaflet";
+import L from "leaflet";
 import {
   getFirestore,
   collection,
@@ -16,8 +17,25 @@ import {
   addDoc,
   getDocs,
 } from "firebase/firestore";
+import {
+  Box,
+  TextField,
+  InputLabel,
+  MenuItem,
+  Select,
+  FormControl,
+  Container,
+  Stack,
+  Button,
+} from "@mui/material";
+import Slider from "@mui/material/Slider";
+import { InputAdornment, Typography } from "@mui/material";
+import { IconButton } from "@mui/material";
 import { query, where } from "firebase/firestore";
 import { auth } from "../utils/firebase";
+import { getDistanceFromLatLonInKm } from "../utils/GetDistanceFromLatLonInKm";
+import { extractNameFromHtml } from "../utils/extractNameFromHtml";
+import { MapStylePanel } from "./MapStylePanel";
 
 // GeoJson Files
 import gymgeojson from "../geojson/GymsSGGEOJSON.geojson";
@@ -31,29 +49,10 @@ import mallsgeojson from "../geojson/shopping_mall_coordinates.geojson";
 import RoutingMachine from "./routingMachine";
 import Routing from "./Routing";
 
-import transit2 from "../icons/transit2.png"
+import transit2 from "../icons/transit2.png";
 import transit from "../icons/transit.png";
 import satellite from "../icons/satellite.png";
 import base from "../icons/base.png";
-
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-  var R = 6371; // Radius of the earth in km
-  var dLat = deg2rad(lat2 - lat1);
-  var dLon = deg2rad(lon2 - lon1);
-  var a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) *
-      Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c; // Distance in km
-  return d;
-}
-
-function deg2rad(deg) {
-  return deg * (Math.PI / 180);
-}
 
 const GeojsonMapComponent = () => {
   const [markers, setMarkers] = useState([]);
@@ -79,6 +78,13 @@ const GeojsonMapComponent = () => {
   const [addressField, setAddressField] = useState("");
   const mapRef = useRef(null);
   const iconSize = 36;
+  const [showPopup, setShowPopup] = useState(false);
+  const [showFormPopup, setShowFormPopup] = useState(false);
+  const [numberofroomsinform, setNumberOfRoomsInForm] = useState();
+  const [projectnameinform, setProjectNameInForm] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
+  const [projectName, setProjectName] = useState("");
+  const [numberOfRooms, setNumberOfRooms] = useState("");
 
   // These are the icons for the map
   const gymIcon = new Icon({
@@ -118,60 +124,336 @@ const GeojsonMapComponent = () => {
   // Users_pref collection ref
   const colRef = collection(db, "User_prefs");
 
+  const HomeSetPopup = ({ onClose }) => {
+    return (
+      <div
+        className="popup-container"
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 1000,
+          background: "white",
+          padding: "20px",
+          borderRadius: "5px",
+          boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <p>Home location set successfully!</p>
+        <Button
+          variant="contained"
+          onClick={onClose}
+          sx={{
+            mr: 1,
+            boxShadow: 1,
+            textTransform: "none",
+            backgroundColor: "#f7776b",
+            "&:hover": { backgroundColor: "#c55f55" },
+          }}
+        >
+          close
+        </Button>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    console.log(myhome);
+  });
+
+  const [myhome, setMyHome] = useState({
+    BTO1: {
+      address: 0,
+      latitude: 0,
+      longitude: 0,
+      projectname: "placeholder",
+      numberofrooms: "placeholder",
+    },
+    BTO2: {
+      address: 0,
+      latitude: 0,
+      longitude: 0,
+      projectname: "placeholder",
+      numberofrooms: "placeholder",
+    },
+    BTO3: {
+      address: 0,
+      latitude: 0,
+      longitude: 0,
+      projectname: "placeholder",
+      numberofrooms: "placeholder",
+    },
+  });
+
+  const handleNumberOfRoomsInForm = (event) => {
+    setNumberOfRoomsInForm(event.target.value);
+  };
+
+  const handleProjectNameInForm = (event) => {
+    setProjectNameInForm(event.target.value);
+  };
+
+  const savingInBTO = (index) => {
+    const q = query(colRef, where("email", "==", auth.currentUser.email));
+
+    getDocs(q)
+      .then((snapshot) => {
+        const btoKey = `BTO${index}`;
+        const updatedBTOData = {
+          address: homeLocation.address,
+          latitude: homeLocation.latitude,
+          longitude: homeLocation.longitude,
+          projectname: projectnameinform,
+          numberofrooms: numberofroomsinform,
+        };
+
+        if (!snapshot.empty) {
+          const docRef = snapshot.docs[0].ref;
+          const currentDocData = snapshot.docs[0].data();
+
+          const updatedDocData = {
+            ...currentDocData,
+            [btoKey]: updatedBTOData,
+          };
+
+          console.log("Updating existing document:", updatedDocData);
+
+          updateDoc(docRef, updatedDocData)
+            .then(() => {
+              console.log("Document updated successfully!");
+              setMyHome(updatedDocData);
+            })
+            .catch((error) => {
+              console.error("Error updating document:", error);
+            });
+        } else {
+          console.log("No document found, creating a new one.");
+          const newHomeData = {
+            email: auth.currentUser.email,
+            [btoKey]: updatedBTOData,
+          };
+
+          addDoc(colRef, newHomeData)
+            .then(() => {
+              console.log("Document created successfully!");
+              setMyHome(newHomeData);
+            })
+            .catch((error) => {
+              console.error("Error creating new document:", error);
+            });
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching documents:", error);
+      });
+
+    setShowFormPopup(false);
+    setShowPopup(true);
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+  };
+
+  const closeFormPopup = () => {
+    setShowFormPopup(false);
+    // setShowPopup(true);
+  };
+
+  const handleShowDetails = (val) => {
+    clearMap();
+    setShowDetails(true);
+
+    const q = query(colRef, where("email", "==", auth.currentUser.email));
+
+    getDocs(q)
+      .then((snapshot) => {
+        // Check if a document exists
+        if (snapshot.empty) {
+          alert("No document found with provided email");
+          return;
+        }
+
+        // Get the document reference from the first snapshot
+        const docData = snapshot.docs[0].data();
+        console.log(docData, "docData");
+
+        // Update the UI based on the selected BTO
+        if (val === 1) {
+          if (!docData.BTO1) {
+            alert("No records exist for BTO1");
+          } else {
+            setProjectName(docData.BTO1.projectname);
+            setNumberOfRooms(docData.BTO1.numberofrooms);
+            setHomeLocation({
+              address: docData.BTO1.address,
+              latitude: docData.BTO1.latitude,
+              longitude: docData.BTO1.longitude,
+            });
+            setDistance(1);
+            flyToCoords(docData.BTO1.latitude, docData.BTO1.longitude);
+          }
+        } else if (val === 2) {
+          if (!docData.BTO2) {
+            alert("No records exist for BTO2");
+          } else {
+            setProjectName(docData.BTO2.projectname);
+            setNumberOfRooms(docData.BTO2.numberofrooms);
+            setHomeLocation({
+              address: docData.BTO2.address,
+              latitude: docData.BTO2.latitude,
+              longitude: docData.BTO2.longitude,
+            });
+            setDistance(1);
+            flyToCoords(docData.BTO2.latitude, docData.BTO2.longitude);
+          }
+        } else if (val === 3) {
+          if (!docData.BTO3) {
+            alert("No records exist for BTO3");
+          } else {
+            setProjectName(docData.BTO3.projectname);
+            setNumberOfRooms(docData.BTO3.numberofrooms);
+            setHomeLocation({
+              address: docData.BTO3.address,
+              latitude: docData.BTO3.latitude,
+              longitude: docData.BTO3.longitude,
+            });
+            setDistance(1);
+            flyToCoords(docData.BTO3.latitude, docData.BTO3.longitude);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching documents:", error);
+      });
+  };
+
+  const FormPopup = () => {
+    return (
+      <Box
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 1000,
+          background: "white",
+          padding: "20px",
+          borderRadius: "5px",
+          boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <InputLabel
+          id="demo-simple-project-name"
+          sx={{
+            color: "black",
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            textAlign: "center",
+          }}
+        >
+          Enter details:{" "}
+        </InputLabel>
+        <Box style={{ marginBottom: 20, marginTop: 10 }}>
+          <InputLabel id="demo-simple-project-name">Project Name</InputLabel>
+          <input
+            style={{ width: "95%", height: 32, fontSize: "1rem" }}
+            type="text"
+            value={projectnameinform}
+            onChange={handleProjectNameInForm}
+          />
+          {/* <TextField id="standard-basic" label="Standard" variant="standard" /> */}
+        </Box>
+        <Box sx={{ marginBottom: 2 }}>
+          <FormControl fullWidth>
+            <InputLabel id="demo-simple-number-rooms">
+              Number of rooms
+            </InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={numberofroomsinform}
+              label="Number of rooms"
+              onChange={handleNumberOfRoomsInForm}
+              sx={{ width: "100%" }}
+            >
+              <MenuItem value={2}>2-room </MenuItem>
+              <MenuItem value={3}>3-room</MenuItem>
+              <MenuItem value={4}>4-room</MenuItem>
+              <MenuItem value={5}>5-room</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => savingInBTO(1)}
+          sx={{
+            mr: 1,
+            boxShadow: 1,
+            textTransform: "none",
+            backgroundColor: "#f7776b",
+            "&:hover": { backgroundColor: "#c55f55" },
+          }}
+        >
+          Save as BTO1
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => savingInBTO(2)}
+          sx={{
+            mr: 1,
+            boxShadow: 1,
+            textTransform: "none",
+            backgroundColor: "#f7776b",
+            "&:hover": { backgroundColor: "#c55f55" },
+          }}
+        >
+          Save as BTO2
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => savingInBTO(3)}
+          sx={{
+            mr: 1,
+            boxShadow: 1,
+            textTransform: "none",
+            backgroundColor: "#f7776b",
+            "&:hover": { backgroundColor: "#c55f55" },
+          }}
+        >
+          Save as BTO3
+        </Button>
+        <Button
+          variant="contained"
+          onClick={closeFormPopup}
+          sx={{
+            mr: 1,
+            boxShadow: 1,
+            textTransform: "none",
+            backgroundColor: "#f7776b",
+            "&:hover": { backgroundColor: "#c55f55" },
+          }}
+        >
+          Close
+        </Button>
+      </Box>
+    );
+  };
+
   const setHome = () => {
     let homeLayerExists = false; // Flag to track if the 'home' layer exists
 
     mapRef.current.eachLayer((layer) => {
       if (layer.options.layerName === "home") {
         homeLayerExists = true; // Set flag to true if 'home' layer is found
+        setShowFormPopup(true);
       }
     });
 
     if (homeLayerExists) {
       // Home pin is on map, proceed to set home
       const q = query(colRef, where("email", "==", auth.currentUser.email));
-
-      getDocs(q)
-        .then((snapshot) => {
-          if (!snapshot.empty) {
-            const doc = snapshot.docs[0].ref;
-            updateDoc(doc, {
-              homeAddress: homeLocation.address,
-              homeLatitude: homeLocation.latitude,
-              homeLongitude: homeLocation.longitude,
-            })
-              .then(() => {
-                console.log("Updated Home Location!");
-              })
-              .catch((error) => {
-                console.error("Error updating document:", error);
-              });
-          } else {
-            console.log("Creating document for user");
-            addDoc(colRef, {
-              email: auth.currentUser.email, // Accessing email property
-            })
-              .then((docRef) => {
-                updateDoc(docRef, {
-                  homeAddress: homeLocation.address,
-                  homeLatitude: homeLocation.latitude,
-                  homeLongitude: homeLocation.longitude,
-                })
-                  .then(() => {
-                    console.log("Saved Home Location!");
-                  })
-                  .catch((error) => {
-                    console.error("Error updating document:", error);
-                  });
-              })
-              .catch((error) => {
-                console.error("Error adding document:", error);
-              });
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching document:", error);
-        });
     } else {
       alert("Click 'Find Home' to Place a Pin");
     }
@@ -190,6 +472,7 @@ const GeojsonMapComponent = () => {
         }
         // Get the document reference from the first snapshot
         const docData = snapshot.docs[0].data();
+        console.log(docData, "DOCDATA");
         // Update the document
         const homeAddress = docData.homeAddress;
         const homeLatitude = docData.homeLatitude;
@@ -212,8 +495,9 @@ const GeojsonMapComponent = () => {
       });
   };
 
-  // WIP
   const clearMap = () => {
+    setShowDetails(false);
+
     mapRef.current.eachLayer((layer) => {
       if (layer.options.layerName !== "mapLayer") {
         mapRef.current.removeLayer(layer);
@@ -311,12 +595,13 @@ const GeojsonMapComponent = () => {
         `https://nominatim.openstreetmap.org/search?q=${addressField}&format=json&addressdetails=1&limit=1`
       );
       if (response.data.length > 0) {
+        console.log(response.data[0]);
         const { lat, lon } = response.data[0];
         const latitude = parseFloat(lat).toFixed(5);
         const longitude = parseFloat(lon).toFixed(5);
         const road = response.data[0].address.road
           ? response.data[0].address.road
-          : response.data[0].address.suburb;
+          : response.data[0].display_name;
 
         const singaporeBounds = {
           north: 1.5,
@@ -368,9 +653,10 @@ const GeojsonMapComponent = () => {
         `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`
       );
       if (response.data) {
+        console.log(response.data);
         const road = response.data.address.road
           ? response.data.address.road
-          : response.data.address.suburb;
+          : response.data.display_name;
         setHomeLocation({
           address: road,
           latitude: latitude,
@@ -389,6 +675,14 @@ const GeojsonMapComponent = () => {
 
   const toggleJson = () => {
     setRoutingLocation({ latitude: null, longitude: null });
+    mapRef.current.eachLayer((layer) => {
+      if (
+        layer instanceof L.Polyline &&
+        layer.options.className === "publictransport"
+      ) {
+        mapRef.current.removeLayer(layer);
+      }
+    });
     if (chosenJson === gymgeojson) {
       setChosenJson(hawkergeojson);
     } else if (chosenJson === hawkergeojson) {
@@ -437,246 +731,11 @@ const GeojsonMapComponent = () => {
     }
   }, [homeLocation]);
 
-  const MapStylePanel = () => {
-    const [expanded, setExpanded] = useState(false);
-    const [timeoutId, setTimeoutId] = useState(null); // To store the timeout ID
-    const [hoveringOverSide, setHoveringOverSide] = useState(false);
-
-    const iconSize = "50px";
-
-    const mainPanelStyle = {
-      position: "absolute",
-      bottom: "10px",
-      left: "10px",
-      zIndex: 1000,
-      backgroundColor: "rgba(255, 255, 255, 0.8)",
-      width: "70px",
-      height: "90px",
-    };
-
-    const sidePanelStyle = {
-      position: "absolute",
-      display: "flex",
-      zIndex: 1000,
-      flexDirection: "row",
-      justifyContent: "right",
-      alignItems: "center",
-      bottom: "10px",
-      left: "90px",
-      backgroundColor: "rgba(255, 255, 255, 0.8)",
-      width: "290px",
-      height: "90px",
-      cursor: "pointer",
-      transition: "opacity 0.3s ease", // Add transition for smooth hiding
-      opacity: expanded ? 1 : 0, // Hide when not expanded
-    };
-
-    const handleClick = (mapStyle, type) => {
-      setExpanded(false); // Collapse the panel when clicked
-      clearTimeout(timeoutId); // Clear any existing timeout
-      setMapStyle(mapStyle);
-      setHoveringOverSide(false);
-
-      if (type === 'base') {
-        setCurrentSource(base)
-      } else if (type === 'satellite') {
-        setCurrentSource(satellite)
-      } else if (type === 'transit2') {
-        setCurrentSource(transit2)
-      } else if (type === 'transit') {
-        setCurrentSource(transit)
-      }
-    };
-
-    const handleMainPanelHover = () => {
-      clearTimeout(timeoutId); // Clear any existing timeout
-      setExpanded(true); // Always expand when hovering over the main panel
-    };
-
-    const handleMainPanelLeave = () => {
-      clearTimeout(timeoutId); // Clear any existing timeout
-      // Set a new timeout to hide the side panel after 3 seconds
-      setTimeoutId(
-        setTimeout(() => {
-          if (hoveringOverSide === false) {
-            setExpanded(false);
-          }
-        }, 1000)
-      );
-    };
-
-    const handleSidePanelHover = () => {
-      clearTimeout(timeoutId); // Clear any existing timeout
-      setExpanded(true);
-      setHoveringOverSide(true);
-    };
-
-    const handleSidePanelLeave = () => {
-      setHoveringOverSide(false);
-      setExpanded(false);
-    };
-
-    return (
-      <div>
-        <div
-          style={mainPanelStyle}
-          className="leaflet-bar leaflet-control"
-          onMouseEnter={handleMainPanelHover}
-          onMouseLeave={handleMainPanelLeave}
-        >
-          <img
-            src={currentSource}
-            alt="Base Map"
-            style={{
-              marginTop: "10px",
-              width: iconSize,
-              height: iconSize,
-              border: "2px solid LightSteelBlue",
-              borderRadius: "5px",
-            }}
-            onClick={() =>
-              handleClick(
-                "https://mt1.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
-              )
-            }
-          />
-          <span>Layers</span>
-        </div>
-
-        {expanded && (
-          <div
-            style={sidePanelStyle}
-            className="leaflet-bar leaflet-control"
-            onMouseEnter={handleSidePanelHover}
-            onMouseLeave={handleSidePanelLeave} // Still hide when leaving the side panel
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                marginRight: "15px",
-                alignItems: "center",
-              }}
-              onClick={() =>
-                handleClick(
-                  "https://mt1.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}",
-                  "base"
-                )
-              }
-            >
-              <img
-                src={base}
-                alt="Base Map"
-                style={{
-                  marginTop: "5px",
-                  marginBottom: "5px",
-                  width: iconSize,
-                  height: iconSize,
-                  border: "2px solid LightSteelBlue",
-                  borderRadius: "5px",
-                }}
-              />
-              <span>Base</span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                marginRight: "15px",
-                alignItems: "center",
-              }}
-              onClick={() =>
-                handleClick(
-                  "https://mt1.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}",
-                  "satellite"
-                )
-              }
-            >
-              <img
-                src={satellite}
-                alt="Base Map"
-                style={{
-                  marginTop: "5px",
-                  marginBottom: "5px",
-                  width: iconSize,
-                  height: iconSize,
-                  border: "2px solid LightSteelBlue",
-                  borderRadius: "5px",
-                }}
-              />
-              <span>Satellite</span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                marginRight: "15px",
-                alignItems: "center",
-              }}
-              onClick={() =>
-                handleClick(
-                  "https://mt1.google.com/vt/lyrs=m@221097413,transit&hl=en&x={x}&y={y}&z={z}",
-                  "transit"
-                )
-              }
-            >
-              <img
-                src={transit}
-                alt="Base Map"
-                style={{
-                  marginTop: "5px",
-                  marginBottom: "5px",
-                  width: iconSize,
-                  height: iconSize,
-                  border: "2px solid LightSteelBlue",
-                  borderRadius: "5px",
-                }}
-              />
-              <span>Transit</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', marginRight: '15px', alignItems: 'center' }} onClick={() => handleClick('https://tile.openstreetmap.org/{z}/{x}/{y}.png', 'transit2')}>
-              <img src={transit2} alt="Base Map" style={{ marginTop: '5px', marginBottom: '5px', width: iconSize, height: iconSize, border: "2px solid LightSteelBlue", borderRadius: '5px' }} />
-              <span>Transit 2</span>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const routeHere = (coords) => {
     setRoutingLocation({ latitude: coords[0], longitude: coords[1] });
     mapRef.current.closePopup();
   };
 
-  // Function to parse HTML content and extract attribute values
-  const extractNameFromHtml = (htmlContent) => {
-    const tableRegex = /<(table|tr|th|td)\b[^>]*>/i;
-    if (tableRegex.test(htmlContent.popUp) === true) {
-      const tempElement = document.createElement("div");
-      tempElement.innerHTML = htmlContent.popUp;
-      const thElements = tempElement.querySelectorAll("th");
-      let nameElement = null;
-      thElements.forEach((th) => {
-        if (
-          th.textContent.trim() === "NAME" ||
-          th.textContent.trim() === "CENTRE_NAME" ||
-          th.textContent.trim() === "HCI_NAME"
-        ) {
-          nameElement = th;
-        }
-      });
-      if (nameElement) {
-        const tdElement = nameElement.nextElementSibling;
-        if (tdElement) {
-          return tdElement.textContent.trim();
-        }
-      }
-      return ""; // Return an empty string if "NAME" is not found
-    } else {
-      return htmlContent.popUp;
-    }
-  };
   // Function to parse HTML content and extract ADDRESSSTREETNAME values
   const extractAttributeName = (obj, key) => {
     if (obj && obj.hasOwnProperty("popUp")) {
@@ -693,23 +752,34 @@ const GeojsonMapComponent = () => {
 
   // This is the content for the Map
   return (
-    <div className="map-container">
+    <Container sx={{ mr: 1, boxShadow: 3 }} maxWidth="100%">
       <div className="map-container__top-bar">
-        <h2 className="map-title">Map View of {mapTitle}</h2>
-
+        <h2>Map View of {mapTitle}</h2>
         {/* Distance slider*/}
-        <div className="slider-container">
-          <label htmlFor="distance-slider">Filter Distance (in km): </label>
-          <input
-            id="distance-slider"
-            className="slider"
-            type="range"
-            min="0"
-            max="10"
-            value={distance}
+        <div style={{ minWidth: "30%" }}>
+          <h3>Filter Distance (in km): {distance} km</h3>
+          <Slider
+            aria-label="Restricted values"
+            defaultValue={1}
+            step={1}
+            min={0}
+            max={10}
+            marks={[
+              { value: 0, label: "0" },
+              { value: 1, label: "1" },
+              { value: 2, label: "2" },
+              { value: 3, label: "3" },
+              { value: 4, label: "4" },
+              { value: 5, label: "5" },
+              { value: 6, label: "6" },
+              { value: 7, label: "7" },
+              { value: 8, label: "8" },
+              { value: 9, label: "9" },
+              { value: 10, label: "10" },
+            ]}
             onChange={(e) => setDistance(e.target.value)}
+            sx={{ color: "#f7776b" }}
           />
-          <span className="slider-distance">{distance} km</span>
         </div>
       </div>
 
@@ -721,33 +791,61 @@ const GeojsonMapComponent = () => {
             <div className="table-container">
               <table className="table-style">
                 <thead>
-                  <tr>
-                    <th>
+                  <Container
+                    sx={{
+                      pb: 2,
+                      pl: 0,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography variant="h7">
                       {markers.length} {mapTitle} in {distance}km Radius:
-                    </th>
-                  </tr>
+                    </Typography>
+                  </Container>
                 </thead>
                 <tbody>
                   {markers.map((marker, index) => (
                     <>
                       <tr key={index}>
                         <td>
-                          <div className="table-style__name">
+                          <Container
+                            sx={{
+                              boxShadow: 1,
+                              p: 2,
+                              mb: 2,
+                              mr: 2,
+                              border: "2px lightgray solid",
+                              borderRadius: 2,
+                            }}
+                          >
                             {extractNameFromHtml(marker)}
-                          </div>
-                          <div className="table-style__address">
-                            {extractAttributeName(marker, "ADDRESSSTREETNAME")}
-                            {", "}
-                            {extractAttributeName(marker, "ADDRESSPOSTALCODE")}
-                          </div>
-                          <div className="table-style__maptitle">
-                            <img
-                              src={markerIcon.options.iconUrl}
-                              alt={JSON.stringify(markerIcon)}
-                              style={{ width: 24, height: 24, marginRight: 5 }}
-                            />
-                            {mapTitle.slice(0, -1)}
-                          </div>
+                            <div className="table-style__address">
+                              {extractAttributeName(
+                                marker,
+                                "ADDRESSSTREETNAME"
+                              )}
+                              <br />
+                              {extractAttributeName(
+                                marker,
+                                "ADDRESSPOSTALCODE"
+                              )}
+                              {extractAttributeName(marker, "STREET_NAME")}
+                              {extractAttributeName(marker, "POSTAL_CD")}
+                            </div>
+                            <div className="table-style__maptitle">
+                              <img
+                                src={markerIcon.options.iconUrl}
+                                alt={JSON.stringify(markerIcon)}
+                                style={{
+                                  width: 24,
+                                  height: 24,
+                                  marginRight: 5,
+                                }}
+                              />
+                              {mapTitle.slice(0, -1)}
+                            </div>
+                          </Container>
                         </td>
                       </tr>
                     </>
@@ -758,7 +856,7 @@ const GeojsonMapComponent = () => {
           )}
           {/* Public Transport Table */}
           <div className="public-transport-route">
-            {routingLocation.latitude && routingLocation.longitude ? (
+            {routingLocation.latitude && routingLocation.longitude && (
               <Routing
                 startLat={homeLocation.latitude}
                 startLng={homeLocation.longitude}
@@ -767,137 +865,263 @@ const GeojsonMapComponent = () => {
                 apiKey={apiKey}
                 mapRef={mapRef}
               />
-            ) : (
-              <p> Select a destination to find public transport routes</p>
             )}
           </div>
         </div>
 
         <div className="right-panel">
-          <LeafletMap
-            center={mapCenter}
-            zoom={11.5}
-            ref={mapRef}
-            className="leaflet-map"
-          >
-            {/* Google Map Tile Layer */}
-            <TileLayer
-              attribution='Map data &copy; <a href="https://www.google.com/maps">Google Maps</a>'
-              url={mapStyle}
-              layerName="mapLayer"
-            />
-            {currentSource === transit2 && (
+          {showDetails && projectName !== null && projectName !== "" && (
+            <Container style={{ margin: "10px", padding: "0px" }}>
+              <span style={{ fontWeight: "bold", fontSize: 18 }}>
+                Project Name:{" "}
+              </span>
+              {projectName}
+              <br />
+              <span style={{ fontWeight: "bold", fontSize: 18 }}>
+                Number of Rooms:{" "}
+              </span>
+              {numberOfRooms !== null ? numberOfRooms : "N/A"}
+            </Container>
+          )}
+          <Container style={{ margin: "10px", padding: "0px" }}>
+            <LeafletMap
+              center={mapCenter}
+              zoom={11.5}
+              ref={mapRef}
+              style={{
+                height: "70vh",
+                border: "4px LightSteelBlue solid",
+                borderRadius: "5px",
+              }}
+            >
+              {/* Google Map Tile Layer */}
               <TileLayer
-                attribution={`Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)`}
-                url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
-                layerName='mapLayer'
+                attribution='Map data &copy; <a href="https://www.google.com/maps">Google Maps</a>'
+                url={mapStyle}
+                layerName="mapLayer"
               />
-            )}
-            {/* This is for the driving route */}
-            <RoutingMachine
-              start={homeLocation}
-              markerLat={routingLocation.latitude}
-              markerLng={routingLocation.longitude}
-            />
+              {currentSource === transit2 && (
+                <TileLayer
+                  attribution={`Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)`}
+                  url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
+                  layerName="mapLayer"
+                />
+              )}
+              {/* This is for the driving route */}
+              <RoutingMachine
+                start={homeLocation}
+                markerLat={routingLocation.latitude}
+                markerLng={routingLocation.longitude}
+              />
 
-            {/* This are markers from the GEOJson data */}
-            {markers.map((marker, index) => (
-              <Marker key={index} position={marker.geocode} icon={markerIcon}>
-                <Popup>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: filterHtmlContent(marker.popUp),
-                    }}
-                  />
-                  <button onClick={() => routeHere(marker.geocode)}>
-                    Get Directions
-                  </button>
-                </Popup>
-              </Marker>
-            ))}
+              {/* This are markers from the GEOJson data */}
+              {markers.map((marker, index) => (
+                <Marker key={index} position={marker.geocode} icon={markerIcon}>
+                  <Popup>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: filterHtmlContent(marker.popUp),
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={() => routeHere(marker.geocode)}
+                      sx={{
+                        mr: 1,
+                        boxShadow: 1,
+                        textTransform: "none",
+                        backgroundColor: "#f7776b",
+                        "&:hover": { backgroundColor: "#c55f55" },
+                      }}
+                    >
+                      Get Directions
+                    </Button>
+                  </Popup>
+                </Marker>
+              ))}
 
-            {/* This is for the home marker */}
-            {homeLocation.latitude && homeLocation.longitude && (
-              <Marker
-                position={[homeLocation.latitude, homeLocation.longitude]}
-                layerName="home"
-                icon={homeIcon}
-                draggable={true}
-                eventHandlers={{ dragend: handleMarkerDragEnd }}
-              >
-                {/* Popup for home marker */}
-              </Marker>
-            )}
+              {/* This is for the home marker */}
+              {homeLocation.latitude && homeLocation.longitude && (
+                <Marker
+                  position={[homeLocation.latitude, homeLocation.longitude]}
+                  layerName="home"
+                  icon={homeIcon}
+                  draggable={true}
+                  eventHandlers={{ dragend: handleMarkerDragEnd }}
+                >
+                  {/* Popup for home marker */}
+                </Marker>
+              )}
 
-            {/* This is for the amenities radius circle */}
-            {
-              homeLocation.latitude &&
-                homeLocation.longitude &&
-                addCircleToMap(
-                  mapRef.current,
-                  [homeLocation.latitude, homeLocation.longitude],
-                  distance * 1000
-                ) // Adjust radius as needed
-            }
+              {/* This is for the amenities radius circle */}
+              {
+                homeLocation.latitude &&
+                  homeLocation.longitude &&
+                  addCircleToMap(
+                    mapRef.current,
+                    [homeLocation.latitude, homeLocation.longitude],
+                    distance * 1000
+                  ) // Adjust radius as needed
+              }
 
-            <MapStylePanel />
-          </LeafletMap>
-
+              <MapStylePanel
+                currentSource={currentSource}
+                setMapStyle={setMapStyle}
+                setCurrentSource={setCurrentSource}
+              />
+            </LeafletMap>
+          </Container>
           {/* This area is the form for the Map */}
           {/* Form for the Map */}
-          <div className="home-waypoint-form">
+          <Container sx={{ mb: 2 }} style={{ paddingRight: "0px" }}>
             <h3>Set Home Waypoint</h3>
-            <div className="input-group">
-              <label htmlFor="address-input">Address: </label>
-              <input
-                id="address-input"
-                type="text"
-                placeholder="Enter Address here..."
-                onChange={(e) => setAddressField(e.target.value)}
-              />
-
-              <div className="buttons-group">
-                <button onClick={handleGeocode}>Find Home</button>
-                {auth.currentUser && (
-                  <button onClick={setHome}>Set Home</button>
-                )}
-                {auth.currentUser && (
-                  <button onClick={loadHome}>Load Saved Home Location</button>
-                )}
-                <button onClick={toggleJson}>Toggle GEOJson</button>
-                <button onClick={clearMap}>Clear Map</button>
-              </div>
-            </div>
-
-            {errorMessage && (
-              <div className="error-message">{errorMessage}</div>
-            )}
-            {homeLocation.latitude && homeLocation.longitude && (
-              <div className="coordinates-display">
-                <span>
-                  <span style={{ fontWeight: "bold", fontSize: 18 }}>
-                    Latitude:{" "}
-                  </span>
-                  {homeLocation.latitude}{" "}
-                </span>
-                <span>
-                  <span style={{ fontWeight: "bold", fontSize: 18 }}>
-                    Longitude:{" "}
-                  </span>
-                  {homeLocation.longitude}{" "}
-                </span>
-                <span>
-                  <span style={{ fontWeight: "bold", fontSize: 18 }}>
-                    Road:{" "}
-                  </span>
-                  {homeLocation.address}
-                </span>
-              </div>
-            )}
-          </div>
+            <TextField
+              variant="outlined"
+              className="btofindtext"
+              label="Enter Address"
+              onChange={(e) => setAddressField(e.target.value)}
+              fullWidth
+              size="small"
+              sx={{ mb: 2 }}
+              error={errorMessage != ""}
+              helperText={errorMessage ? errorMessage : ""}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      color="primary"
+                      onClick={handleGeocode}
+                    >
+                      <Typography>Search</Typography>
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleGeocode(); // Call your search function here
+                }
+              }}
+            />
+            <Stack
+              sx={{ mb: 2 }}
+              spacing={{ xs: 1 }}
+              direction="row"
+              useFlexGap
+              flexWrap="wrap"
+            >
+              <Button
+                variant="contained"
+                onClick={setHome}
+                sx={{
+                  mr: 1,
+                  boxShadow: 1,
+                  textTransform: "none",
+                  backgroundColor: "#f7776b",
+                  "&:hover": { backgroundColor: "#c55f55" },
+                }}
+              >
+                Set Home
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                onClick={toggleJson}
+                sx={{
+                  mr: 1,
+                  boxShadow: 1,
+                  textTransform: "none",
+                  backgroundColor: "#f7776b",
+                  "&:hover": { backgroundColor: "#c55f55" },
+                }}
+              >
+                Toggle Amenities
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                onClick={clearMap}
+                sx={{
+                  mr: 1,
+                  boxShadow: 1,
+                  textTransform: "none",
+                  backgroundColor: "#f7776b",
+                  "&:hover": { backgroundColor: "#c55f55" },
+                }}
+              >
+                Clear Map
+              </Button>
+            </Stack>
+            <hr />
+            <h3>Load BTOs</h3>
+            <Stack
+              spacing={{ xs: 1 }}
+              direction="row"
+              useFlexGap
+              flexWrap="wrap"
+            >
+              <Button
+                variant="contained"
+                onClick={() => handleShowDetails(1)}
+                sx={{
+                  mr: 1,
+                  boxShadow: 1,
+                  textTransform: "none",
+                  backgroundColor: "#f7776b",
+                  "&:hover": { backgroundColor: "#c55f55" },
+                }}
+              >
+                View BTO1
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                onClick={() => handleShowDetails(2)}
+                sx={{
+                  mr: 1,
+                  boxShadow: 1,
+                  textTransform: "none",
+                  backgroundColor: "#f7776b",
+                  "&:hover": { backgroundColor: "#c55f55" },
+                }}
+              >
+                View BTO2
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                onClick={() => handleShowDetails(3)}
+                sx={{
+                  mr: 1,
+                  boxShadow: 1,
+                  textTransform: "none",
+                  backgroundColor: "#f7776b",
+                  "&:hover": { backgroundColor: "#c55f55" },
+                }}
+              >
+                View BTO3
+              </Button>
+            </Stack>
+          </Container>
         </div>
       </div>
-    </div>
+      <div className="info-section">
+        <p>
+          For more information on upcoming BTOs, you can visit{" "}
+          <a
+            href="https://homes.hdb.gov.sg/home/landing"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            https://homes.hdb.gov.sg/home/landing
+          </a>
+        </p>
+      </div>
+
+      <div>{showPopup && <HomeSetPopup onClose={closePopup} />}</div>
+      <div>{showFormPopup && FormPopup()}</div>
+    </Container>
   );
 };
 
@@ -918,9 +1142,81 @@ const filterHtmlContent = (htmlContent) => {
       textContent === "FMEL_UPD_D" ||
       textContent === "PHOTOURL" ||
       textContent === "EST_ORIGINAL_COMPLETION_DATE" ||
-      textContent === "ADDRESSBLOCKHOUSENUMBER"
+      textContent === "ADDRESSBLOCKHOUSENUMBER" ||
+      textContent === "APPROXIMATE_GFA" ||
+      textContent === "STATUS" ||
+      textContent === "HUP_COMPLETION_DATE" ||
+      textContent === "IMPLEMENTATION_DATE" ||
+      textContent === "INFO_ON_CO_LOCATORS" ||
+      textContent === "AWARDED_DATE" ||
+      textContent === "CENTRE_CODE" ||
+      textContent === "HCI_CODE" ||
+      textContent === "LICENCE_TYPE" ||
+      textContent === "ADDR_TYPE" ||
+      textContent === "X_COORDINATE" ||
+      textContent === "Y_COORDINATE" ||
+      textContent === "HYPERLINK"
     ) {
       thElement.parentNode.remove();
+    } else {
+      switch (thElement.textContent) {
+        case "ADDRESSPOSTALCODE":
+          thElement.textContent = "Postal Code";
+          break;
+        case "ADDRESSBUILDINGNAME":
+          thElement.textContent = "Building Name";
+          break;
+        case "ADDRESSUNITNUMBER":
+          thElement.textContent = "Unit Number";
+          break;
+        case "ADDRESSFLOORNUMBER":
+          thElement.textContent = "Floor Number";
+          break;
+        case "ADDRESSSTREETNAME":
+          thElement.textContent = "Street Name";
+          break;
+        case "DESCRIPTION":
+          thElement.textContent = "Description";
+          break;
+        case "NAME":
+          thElement.textContent = "Name";
+          break;
+        case "ADDRESS_MYENV":
+          thElement.textContent = "Address"
+          break;
+        case "CENTRE_NAME":
+          thElement.textContent = "Centre Name"
+          break;
+        case "HCI_NAME":
+          thElement.textContent = "HCI Name";
+          break;
+        case "HCI_TEL":
+          thElement.textContent = "HCI Telephone";
+          break;
+        case "POSTAL_CD":
+          thElement.textContent = "Postal Code";
+          break;
+        case "BLK_HSE_NO":
+          thElement.textContent = "Block/House Number";
+          break;
+        case "FLOOR_NO":
+          thElement.textContent = "Floor Number";
+          break;
+        case "UNIT_NO":
+          thElement.textContent = "Unit Number";
+          break;
+        case "STREET_NAME":
+          thElement.textContent = "Street Name";
+          break;
+        case "BUILDING_NAME":
+          thElement.textContent = "Building Name";
+          break;
+        case "CLINIC_PROGRAMME_CODE":
+          thElement.textContent = "Clinic Programme Code";
+          break;
+        default:
+          break;
+      }
     }
   });
   return tempElement.innerHTML;

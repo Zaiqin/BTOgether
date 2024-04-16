@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { auth } from "../utils/firebase";
 import {
   getFirestore,
@@ -41,7 +41,7 @@ const UserProfileForm = () => {
   });
 
   const [prefs, setPrefs] = useState([]);
-  const [loadedData, setLoadedData] = useState()
+  const [loadedData, setLoadedData] = useState();
   const [formData, setFormData] = useState({
     maritalStatus: "",
     salary: "",
@@ -53,32 +53,57 @@ const UserProfileForm = () => {
     const unsubscribe = onSnapshot(
       query(colRef, where("email", "==", auth.currentUser.email)),
       (snapshot) => {
-        // Modified colRef, execute this code:
-        let prefsData = [];
-        snapshot.docs.forEach((doc) => {
-          prefsData.push({ ...doc.data(), id: doc.id });
-        });
-        setPrefs(prefsData);
-        setLoadedData({
-          maritalStatus: prefsData[0].maritalStatus,
-          salary: prefsData[0].salary,
-          parentsAddress: {
-            address: prefsData[0].parentsAddress ? prefsData[0].parentsAddress.address : "",
-            latitude: prefsData[0].parentsAddress ? prefsData[0].parentsAddress.latitude : null,
-            longitude: prefsData[0].parentsAddress ? prefsData[0].parentsAddress.longitude : null
-          },
-          workplaceLocation: {
-            address: prefsData[0].workplaceLocation ? prefsData[0].workplaceLocation.address : "",
-            latitude: prefsData[0].workplaceLocation ? prefsData[0].workplaceLocation.address : null,
-            longitude: prefsData[0].workplaceLocation ? prefsData[0].workplaceLocation.address : null,
-          }
-        })
-        if (!prefsData) {
-          if (prefsData[0].salary !== null) {
-            setFormData(prevState => ({ ...prevState, salary: prefsData[0].salary }));
-          }
-          if (prefsData[0].maritalStatus !== null) {
-            setFormData(prevState => ({ ...prevState, maritalStatus: prefsData[0].maritalStatus }));
+        if (snapshot.empty) {
+          console.log("Creating document for user");
+          addDoc(colRef, {
+            email: auth.currentUser.email, // Accessing email property
+          });
+        } else {
+          // Modified colRef, execute this code:
+          let prefsData = [];
+          snapshot.docs.forEach((doc) => {
+            prefsData.push({ ...doc.data(), id: doc.id });
+          });
+          setPrefs(prefsData);
+          setLoadedData({
+            maritalStatus: prefsData[0].maritalStatus,
+            salary: prefsData[0].salary,
+            parentsAddress: {
+              address: prefsData[0].parentsAddress
+                ? prefsData[0].parentsAddress.address
+                : "",
+              latitude: prefsData[0].parentsAddress
+                ? prefsData[0].parentsAddress.latitude
+                : null,
+              longitude: prefsData[0].parentsAddress
+                ? prefsData[0].parentsAddress.longitude
+                : null,
+            },
+            workplaceLocation: {
+              address: prefsData[0].workplaceLocation
+                ? prefsData[0].workplaceLocation.address
+                : "",
+              latitude: prefsData[0].workplaceLocation
+                ? prefsData[0].workplaceLocation.address
+                : null,
+              longitude: prefsData[0].workplaceLocation
+                ? prefsData[0].workplaceLocation.address
+                : null,
+            },
+          });
+          if (!prefsData) {
+            if (prefsData[0].salary !== null) {
+              setFormData((prevState) => ({
+                ...prevState,
+                salary: prefsData[0].salary,
+              }));
+            }
+            if (prefsData[0].maritalStatus !== null) {
+              setFormData((prevState) => ({
+                ...prevState,
+                maritalStatus: prefsData[0].maritalStatus,
+              }));
+            }
           }
         }
       }
@@ -123,14 +148,18 @@ const UserProfileForm = () => {
 
   function check(loaded, form) {
     // Marital Status
-    if (form.maritalStatus != "" && (form.maritalStatus != loaded.maritalStatus)) return true
+    if (
+      form.maritalStatus !== "" &&
+      form.maritalStatus !== loaded.maritalStatus
+    )
+      return true;
     // Salary
-    if (form.salary != "" && (form.salary != loaded.salary)) return true
+    if (form.salary !== "" && form.salary !== loaded.salary) return true;
     // Parents Address
-    if (form.parentsAddress.latitude != null) return true
+    if (form.parentsAddress.latitude !== null) return true;
     // Workplace Address
-    if (form.workplaceLocation.latitude != null) return true
-    return false
+    if (form.workplaceLocation.latitude !== null) return true;
+    return false;
   }
 
   const handleSubmit = async (e) => {
@@ -138,7 +167,7 @@ const UserProfileForm = () => {
     e.preventDefault();
     const q = query(colRef, where("email", "==", auth.currentUser.email));
 
-    const result = check(loadedData, formData)
+    const result = check(loadedData, formData);
     if (result) {
       // Initialize an object to store updated data
       let updatedData = {};
@@ -244,7 +273,11 @@ const UserProfileForm = () => {
         <div style={{ marginBottom: "5px" }}>
           <div style={{ marginBottom: "20px", marginTop: "15px" }}>
             <Typography variant="h7">
-              Marital Status: {prefs[0] && (prefs[0].maritalStatus ? prefs[0].maritalStatus : "Not specified")}
+              Marital Status:{" "}
+              {prefs[0] &&
+                (prefs[0].maritalStatus
+                  ? prefs[0].maritalStatus
+                  : "Not specified")}
             </Typography>
           </div>
           <FormControl fullWidth>
@@ -265,7 +298,9 @@ const UserProfileForm = () => {
         </div>
         <div style={{ marginBottom: "20px" }}>
           <Typography variant="h7">
-            Salary: {prefs[0] && (prefs[0].salary ? "$" + prefs[0].salary : "Not specified")}
+            Salary:{" "}
+            {prefs[0] &&
+              (prefs[0].salary ? "$" + prefs[0].salary : "Not specified")}
           </Typography>
         </div>
         <div style={{ marginBottom: "5px" }}>
@@ -439,7 +474,8 @@ const UserProfileForm = () => {
           <Button
             type="submit"
             variant="contained"
-            sx={{ mr: 1, boxShadow: 1 }}
+            sx={{ mr: 1, boxShadow: 1, backgroundColor: "#f7776b",
+            "&:hover": { backgroundColor: "#c55f55" }, }}
           >
             Update Profile
           </Button>

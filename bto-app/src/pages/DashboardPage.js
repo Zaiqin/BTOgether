@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState, useRef, forwardRef } from "react";
 import Navbar from "../components/NavBar";
 import { v4 as uuidv4 } from "uuid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -6,10 +6,8 @@ import {
   faHeart,
   faCodeCompare,
   faPlus,
+  faTrashCan,
 } from "@fortawesome/free-solid-svg-icons";
-
-import "../css/dashboard.css";
-import Comparison from '../components/Comparison';
 
 // DnD
 import {
@@ -26,89 +24,129 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import axios, { all } from "axios";
+
+// GeoJson Files
+import gymgeojson from "../geojson/GymsSGGEOJSON.geojson";
+import hawkergeojson from "../geojson/HawkerCentresGEOJSON.geojson";
+import parksgeojson from "../geojson/Parks.geojson";
+import preschoolgeojson from "../geojson/PreSchoolsLocation.geojson";
+import clinicgeojson from "../geojson/CHASClinics.geojson";
+import mallsgeojson from "../geojson/shopping_mall_coordinates.geojson";
 
 // Components
 import Container from "../components/Container";
-import Items from "../components/Item";
 import Modal from "../components/Modal";
 import Input from "../components/Input";
 import { Button } from "../components/Button";
-
-// need to accept JSON from Firebase
-//Example
-
-const defaultFrames1 = [
-  { name: "Location", description: "Woodlands Drive 16." },
-  { name: "Town", description: "Woodlands." },
-  { name: "Town Council", description: "Sembawang Town Council." },
-  { name: "Price", description: "$670,000." },
-  { name: "Square Footage", description: "1245 sqf." },
-  { name: "Number of Rooms", description: "4 Room Flat." },
-  { name: "Estimated Date of Completion", description: "2027." },
-];
-
-const defaultFrames2 = [
-  { name: "Location", description: "Marine Parade Central." },
-  { name: "Town", description: "Marine Parade." },
-  { name: "Town Council", description: "Marine Parade Town Council." },
-  { name: "Price", description: "$800,000." },
-  { name: "Square Footage", description: "1100 sqf." },
-  { name: "Number of Rooms", description: "3 Room Flat." },
-  { name: "Estimated Date of Completion", description: "2026." },
-];
-
-const defaultFrames3 = [
-  { name: "Location", description: "Jurong West Street 41." },
-  { name: "Town", description: "Jurong West." },
-  { name: "Town Council", description: "Jurong West Town Council." },
-  { name: "Price", description: "$720,000." },
-  { name: "Square Footage", description: "1350 sqf." },
-  { name: "Number of Rooms", description: "5 Room Flat." },
-  { name: "Estimated Date of Completion", description: "2025." },
-];
-
-const generateId = () => `container-${uuidv4()}`;
-
-// TESTING
-const testing_frame = defaultFrames1.map((frame) => ({
-  id: generateId(),
-  title: frame.name,
-  description: frame.description,
-  items: [],
-}));
+import Comparison from "../components/Comparison";
+import { getAmenities } from "../components/GetAmenities";
+import { fetchPublicTransport } from "../utils/fetchPublicTransport";
+import { fetchTravelTime } from "../utils/fetchTravelTime";
+import Gemini from "../components/GoogleGenerativeAIComponent";
 
 export default function DashboardPage() {
+  const [activeBTO, setActiveBTO] = useState(null);
   const [BTO1, setBTO1] = useState(true);
   const [BTO2, setBTO2] = useState(true);
   const [BTO3, setBTO3] = useState(true);
-  const [activeBTO, setActiveBTO] = useState(null);
   const [containers, setContainers] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [currentContainerId, setCurrentContainerId] = useState(null);
   const [containerName, setContainerName] = useState("");
   const [showAddContainerModal, setShowAddContainerModal] = useState(false);
+  const [showAddInfoModal, setShowAddInfoModal] = useState(false);
   const [isHeartClicked, setIsHeartClicked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showGridsAnimation, setShowGridsAnimation] = useState(true);
   const [isAddFramesHovered, setIsAddFramesHovered] = useState(false);
-  const [numberOfTrueBTOs, setNumberOfTrueBTOs] = useState(0); // New state to track count of true BTOs
+  const [numberOfTrueBTOs, setNumberOfTrueBTOs] = useState(0);
+
+  const [distance, setDistance] = useState(5);
+  const [addressField, setAddressField] = useState("");
+  const [selected, setSelected] = useState("");
+  const [optionSelected, setOptionSelected] = useState("");
+  const [numberOfAmenities, setNumberOfAmenities] = useState(null);
+  const [timeToTravel, setTimeToTravel] = useState(0);
+  const [timeToTravelInString, setTimeToTravelInString] = useState("");
+
+  const [homeGeoCode, setHomeGeoCode] = useState({
+    latitude: 1.3526941,
+    longitude: 103.6920069,
+  });
+  const [destGeoCode, setDestGeoCode] = useState({
+    latitude: 1.3766432,
+    longitude: 103.8181963,
+  });
+
+  // TODO : ATTENTION NEED TO REPLACE WITH REAL LOCATION
+  const [homeaddressField, setHomeAddressField] = useState(
+    "nanyang technological university Singapore"
+  );
 
   // DEBUGGING
+  // useEffect(() => {
+  //   console.log("distance:", distance);
+  //   console.log("addressField:", addressField);
+  //   console.log("selected:", selected);
+  //   console.log("optionSelected:", optionSelected);
+  //   console.log("numberOfAmenities:", numberOfAmenities);
+  //   console.log("timeToTravel:", timeToTravel);
+  //   console.log("homeGeoCode:", homeGeoCode);
+  //   console.log("destGeoCode:", destGeoCode);
+  //   console.log("timeToTravelInString:", timeToTravelInString);
+  // }, [
+  //   distance,
+  //   addressField,
+  //   selected,
+  //   optionSelected,
+  //   numberOfAmenities,
+  //   timeToTravel,
+  //   homeGeoCode,
+  //   destGeoCode,
+  //   timeToTravelInString,
+  // ]);
+
+  const STORAGE_KEY_PREFIX = "dashboard_containers_";
+
+  // Load containers for the active BTO from localStorage on component mount
   useEffect(() => {
-    console.log("containers:", JSON.stringify(containers, null, 2));
-  }, [containers]);
+    if (activeBTO) {
+      const storedContainers = localStorage.getItem(
+        STORAGE_KEY_PREFIX + activeBTO
+      );
+      if (storedContainers) {
+        setContainers(JSON.parse(storedContainers));
+      }
+    }
+  }, [activeBTO]);
+
+  // Save containers for the active BTO to localStorage whenever containers state changes
+  useEffect(() => {
+    if (activeBTO) {
+      localStorage.setItem(
+        STORAGE_KEY_PREFIX + activeBTO,
+        JSON.stringify(containers)
+      );
+    }
+  }, [containers, activeBTO]);
+
+  // DEBUGGING
+  // useEffect(() => {
+  //   // console.log("containers:", JSON.stringify(containers, null, 2));
+
+  //   // Log the updated activeBTO state
+  //   console.log("New active BTO: " + activeBTO);
+  // }, [containers, activeBTO]);
 
   useEffect(() => {
-    // TODO: FUNCTIONALITY TO ACCEPT GET INFO FROM FIREBASE
-    //       UPDATE BTO USESTATE IF NECESSARY
-
     // Trigger alert when Unfavourite BTO
     if (isHeartClicked) {
       alert("Unfavourite BTO!");
       setIsHeartClicked(false);
     }
 
-    // Set containers based on activeBTO
+    //Set containers based on activeBTO
     switch (activeBTO) {
       case "BTO1":
         setContainers(testing_frame);
@@ -158,8 +196,6 @@ export default function DashboardPage() {
     // Update the count of true BTOs
     const count = [BTO1, BTO2, BTO3].filter((bto) => bto).length;
     setNumberOfTrueBTOs(count);
-    // Log the updated activeBTO state
-    console.log("New active BTO: " + activeBTO);
   }, [BTO1, BTO2, BTO3]);
 
   // Function to handle button click for BTO1
@@ -179,6 +215,7 @@ export default function DashboardPage() {
 
   // INSERT CODE FOR COMPARISON
   const comparisonRef = useRef(null);
+
   // Check for ref and Open Comparison Tab
   const handleComparison = () => {
     const tryOpenComparison = () => {
@@ -187,14 +224,6 @@ export default function DashboardPage() {
         : setTimeout(tryOpenComparison, 100);
     };
     tryOpenComparison();
-  };
-
-  const handleDeleteContainer = (containerId) => {
-    console.log("remove frame" + containerId);
-    const updatedContainers = containers.filter(
-      (container) => container.id !== containerId
-    );
-    setContainers(updatedContainers);
   };
 
   const removeFavouriteBTO = () => {
@@ -217,24 +246,261 @@ export default function DashboardPage() {
     }
   };
 
-  const onAddContainer = () => {
-    if (containers.length >= 12) {
-      alert("Maximum number of frames reached");
+  const handleGeocode = async () => {
+    if (addressField === null || addressField === "") {
       return;
     }
-    if (!containerName) return;
-    const id = `container-${uuidv4()}`;
-    setContainers([
-      ...containers,
-      {
-        id,
-        title: containerName,
-        description: `Description for ${containerName}`,
-        items: [],
-      },
-    ]);
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?q=${addressField}&format=json&addressdetails=1&limit=1`
+      );
+      if (response.data.length > 0) {
+        console.log(response.data[0]);
+        const { lat, lon } = response.data[0];
+        const latitude = parseFloat(lat).toFixed(5);
+        const longitude = parseFloat(lon).toFixed(5);
+        const road = response.data[0].address.road
+          ? response.data[0].address.road
+          : response.data[0].display_name;
+
+        const singaporeBounds = {
+          north: 1.5,
+          south: 1.1,
+          east: 104.1,
+          west: 103.6,
+        };
+
+        if (
+          latitude >= singaporeBounds.south &&
+          latitude <= singaporeBounds.north &&
+          longitude >= singaporeBounds.west &&
+          longitude <= singaporeBounds.east
+        ) {
+          setDestGeoCode({
+            latitude: latitude,
+            longitude: longitude,
+          });
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const resetContainerFields = () => {
+    setSelected("");
     setContainerName("");
+    setOptionSelected("");
+    setDistance(5);
+    setAddressField("");
+    setNumberOfAmenities(null);
+    setTimeToTravel(0);
+    setTimeToTravelInString("");
     setShowAddContainerModal(false);
+  };
+
+  const getDataFromInputComponent = ({
+    selected,
+    optionSelected,
+    distance,
+    addressField,
+  }) => {
+    setSelected(selected);
+    setContainerName(selected);
+    setOptionSelected(optionSelected);
+    setDistance(distance);
+    setAddressField(addressField);
+  };
+
+  const handleDataFromInputComponent = () => {
+    if (selected === "Transportation") {
+      handleGeocode();
+      switch (optionSelected) {
+        case "Car":
+          setTimeToTravel(
+            fetchTravelTime(
+              homeGeoCode.latitude,
+              homeGeoCode.longitude,
+              destGeoCode.latitude,
+              destGeoCode.longitude,
+              "car", // specify the mode of transport
+              true // return time in seconds
+            ).then((time) => {
+              setTimeToTravel(time);
+            })
+          );
+          break;
+
+        case "Public Transport":
+          setTimeToTravel(
+            fetchPublicTransport(
+              homeGeoCode.latitude,
+              homeGeoCode.longitude,
+              destGeoCode.latitude,
+              destGeoCode.longitude,
+              true // return time in seconds
+            ).then((time) => {
+              setTimeToTravel(time);
+            })
+          );
+          break;
+
+        default:
+          console.log(
+            "Error fetching Transportation: No option selected",
+            optionSelected
+          );
+          break;
+      }
+    } else if (selected === "Amenities") {
+      switch (optionSelected) {
+        case "Gyms":
+          getAmenities(gymgeojson, homeGeoCode, distance)
+            .then((count) => {
+              setNumberOfAmenities(count);
+            })
+            .catch((error) => {
+              console.error("Error fetching amenities:", error);
+            });
+          break;
+        case "Hawkers":
+          getAmenities(hawkergeojson, homeGeoCode, distance)
+            .then((count) => {
+              setNumberOfAmenities(count);
+            })
+            .catch((error) => {
+              console.error("Error fetching amenities:", error);
+            });
+          break;
+        case "Parks":
+          getAmenities(parksgeojson, homeGeoCode, distance)
+            .then((count) => {
+              setNumberOfAmenities(count);
+            })
+            .catch((error) => {
+              console.error("Error fetching amenities:", error);
+            });
+          break;
+        case "Preschools":
+          getAmenities(preschoolgeojson, homeGeoCode, distance)
+            .then((count) => {
+              setNumberOfAmenities(count);
+            })
+            .catch((error) => {
+              console.error("Error fetching amenities:", error);
+            });
+          break;
+        case "Clinics":
+          getAmenities(clinicgeojson, homeGeoCode, distance)
+            .then((count) => {
+              setNumberOfAmenities(count);
+            })
+            .catch((error) => {
+              console.error("Error fetching amenities:", error);
+            });
+          break;
+        case "Malls":
+          getAmenities(mallsgeojson, homeGeoCode, distance)
+            .then((count) => {
+              setNumberOfAmenities(count);
+            })
+            .catch((error) => {
+              console.error("Error fetching amenities:", error);
+            });
+          break;
+        default:
+          console.log("Error fetching Amenities : No option selcted");
+          break;
+      }
+    }
+  };
+
+  useEffect(() => {
+    formatTime(timeToTravel);
+  }, [timeToTravel]);
+
+  function formatTime(seconds) {
+    console.log();
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    let result = "";
+
+    if (hours > 0) {
+      result += `${hours} hour${hours !== 1 ? "s" : ""}`;
+    }
+
+    if (minutes > 0) {
+      result += `${result.length > 0 ? " " : ""}${minutes} minute${
+        minutes !== 1 ? "s" : ""
+      }`;
+    }
+
+    if (hours === 0 && minutes === 0) {
+      result += `${remainingSeconds} second${
+        remainingSeconds !== 1 ? "s" : ""
+      }`;
+    }
+
+    setTimeToTravelInString(result);
+  }
+
+  useEffect(() => {
+    handleDataFromInputComponent();
+  }, [selected, optionSelected, homeGeoCode, destGeoCode, distance]);
+
+  // Function to add a new container
+  const onAddContainer = () => {
+    // Reject
+    if (
+      containerName === "" ||
+      containers.length >= 12 ||
+      optionSelected === undefined
+    ) {
+      console.log("Invalid selection");
+      resetContainerFields();
+      return;
+    }
+
+    handleDataFromInputComponent();
+
+    const id = generateId();
+    let description;
+
+    if (containerName === "Transportation") {
+      if (addressField === "" || addressField === null) {
+        console.log("Invalid addressfield");
+        resetContainerFields();
+        return;
+      }
+      description = `The Time to reach ${addressField} by ${optionSelected} is ${timeToTravelInString} `;
+    } else if (containerName === "Amenities") {
+      description = `The number of ${optionSelected} within ${distance} KM is ${numberOfAmenities}`;
+    }
+
+    const newContainer = {
+      id,
+      title: containerName,
+      description: description,
+      numberOfAmenities,
+      timeToTravel,
+      imageUrl: "",
+    };
+
+    setContainers((prevContainers) => [...prevContainers, newContainer]);
+    resetContainerFields();
+  };
+
+  // Function to delete a container
+  const onDeleteContainer = (containerId) => {
+    setContainers((prevContainers) =>
+      prevContainers.filter((container) => container.id !== containerId)
+    );
   };
 
   function findValueOfItems(id, type) {
@@ -247,6 +513,18 @@ export default function DashboardPage() {
     const container = findValueOfItems(id, "container");
     if (!container) return "";
     return container.title;
+  };
+
+  const findContainerDescription = (id) => {
+    const container = findValueOfItems(id, "container");
+    if (!container) return "";
+    return container.description;
+  };
+
+  const findContainerLongDescription = (id) => {
+    const container = findValueOfItems(id, "container");
+    if (!container) return "";
+    return container.long_description;
   };
 
   // DND Handlers
@@ -301,33 +579,61 @@ export default function DashboardPage() {
           showModal={showAddContainerModal}
           setShowModal={setShowAddContainerModal}
         >
-          <div className="flex flex-col w-full items-start gap-y-4">
-            <h1 className="text-gray-800 text-3xl font-bold">Add Container</h1>
+          <div className="flex flex-col w-auto items-start gap-y-4 p-3 bg-white rounded-lg">
+            <h1 className="text-green-800 text-3xl font-bold">
+              Add Interactable Frame
+            </h1>
+            <p className="text-gray-700">
+              Please select which interactable frame you would like to create
+              from the dropdown box below.
+            </p>
             <Input
               type="text"
               placeholder="Container Title"
               name="containername"
               value={containerName}
-              onChange={(e) => setContainerName(e.target.value)}
+              onChange={getDataFromInputComponent}
             />
-            <Button onClick={onAddContainer}>Add container</Button>
+            <div className="my-2"></div>
+            <Button
+              onClick={onAddContainer}
+              className="rounded-lg bg-customRed border-transparent hover:text-red-700 text-white px-6 py-4 transition duration-300 ease-in-out font-bold relative"
+              onMouseEnter={() => setIsAddFramesHovered(true)}
+              onMouseLeave={() => setIsAddFramesHovered(false)}
+            >
+              <FontAwesomeIcon icon={faPlus} />
+              <span className="add-text"> Add Frames</span>
+            </Button>
           </div>
         </Modal>
 
-        {/* Add Item Modal */}
-        {/* <Modal showModal={showAddItemModal} setShowModal={setShowAddItemModal}>
-        <div className="flex flex-col w-full items-start gap-y-4">
-          <h1 className="text-gray-800 text-3xl font-bold">Add Item</h1>
-          <Input
-            type="text"
-            placeholder="Item Title"
-            name="itemname"
-            value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
-          />
-          <Button onClick={onAddItem}>Add Item</Button>
-        </div>
-      </Modal> */}
+        {/* Add Informational Modal*/}
+        <Modal showModal={showAddInfoModal} setShowModal={setShowAddInfoModal}>
+          <div className="flex flex-col w-full items-center justify-center gap-y-4 h-400px overflow-auto relative">
+            <h1 className="text-green-800 text-3xl font-bold mb-4">
+              {" "}
+              {/* Added mb-4 */}
+              {findContainerTitle(currentContainerId)}
+            </h1>
+            {/* Add Information*/}
+            <div class="overflow-auto">
+              <Gemini prompt={findContainerDescription(currentContainerId)} />
+            </div>
+          </div>
+          <div className="mt-2">
+            {" "}
+            {/* Added mt-2 */}
+            <button
+              onClick={() => {
+                onDeleteContainer(currentContainerId);
+                setShowAddInfoModal(false);
+              }}
+              className="dashboard-button relative p-2 buttom-2 right-2 border-transparent shadow-md border rounded-md hover:bg-red-400 transition duration-300 "
+            >
+              <FontAwesomeIcon icon={faTrashCan} />
+            </button>
+          </div>
+        </Modal>
 
         {/* Add Header Buttons */}
         <div className="flex items-center gap-y-2">
@@ -338,7 +644,7 @@ export default function DashboardPage() {
 
             {activeBTO !== null && (
               <Button
-                className={`border-transparent px-3 py-3 relative transition duration-300 ease-in-out bg-transparent ${
+                className={` dashboard-button border-transparent px-3 py-3 relative transition duration-300 ease-in-out bg-transparent ${
                   isHeartClicked ? "text-transparent" : "text-red-500"
                 }`}
                 onClick={removeFavouriteBTO} // Set clicked state to true when button is clicked
@@ -431,7 +737,7 @@ export default function DashboardPage() {
         <div className="mt-10">
           {activeBTO !== null && (
             <div
-              className={`grid grid-cols-3 gap-6 ${
+              className={`grid grid-cols-4 gap-6 ${
                 showGridsAnimation ? "animate-fadeIn" : ""
               }`}
             >
@@ -449,8 +755,13 @@ export default function DashboardPage() {
                       id={container.id}
                       title={container.title}
                       description={container.description}
+                      numberOfAmenities={container.numberOfAmenities}
+                      timeToTravel={container.timeToTravel}
                       key={container.id}
-                      onDelete={handleDeleteContainer}
+                      onExpand={() => {
+                        setCurrentContainerId(container.id);
+                        setShowAddInfoModal(true);
+                      }}
                     ></Container>
                   ))}
                 </SortableContext>
@@ -471,3 +782,61 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+// const dataUtilityRef = useRef(null);
+// const tryLoadUserData = () => {
+//   dataUtilityRef.current
+//     ? dataUtilityRef.current.loadUserData()
+//     : setTimeout(tryLoadUserData, 100);
+// };
+
+const defaultFrames1 = [
+  { name: "Location", description: "Woodlands Drive 16." },
+  { name: "Town", description: "Woodlands." },
+  { name: "Town Council", description: "Sembawang Town Council." },
+  {
+    name: "Historical HDB Price",
+    description: "$670,000.",
+    long_description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  },
+  {
+    name: "Historical BTO Price",
+    description: "$500,000",
+    long_description:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  },
+  { name: "Number of Rooms", description: "4 Room Flat." },
+  { name: "Estimated Date of Completion", description: "2027." },
+];
+
+const defaultFrames2 = [
+  { name: "Location", description: "Marine Parade Central." },
+  { name: "Town", description: "Marine Parade." },
+  { name: "Town Council", description: "Marine Parade Town Council." },
+  { name: "Price", description: "$800,000." },
+  { name: "Square Footage", description: "1100 sqf." },
+  { name: "Number of Rooms", description: "3 Room Flat." },
+  { name: "Estimated Date of Completion", description: "2026." },
+];
+
+const defaultFrames3 = [
+  { name: "Location", description: "Jurong West Street 41." },
+  { name: "Town", description: "Jurong West." },
+  { name: "Town Council", description: "Jurong West Town Council." },
+  { name: "Price", description: "$720,000." },
+  { name: "Square Footage", description: "1350 sqf." },
+  { name: "Number of Rooms", description: "5 Room Flat." },
+  { name: "Estimated Date of Completion", description: "2025." },
+];
+
+const generateId = () => `container-${uuidv4()}`;
+
+// TESTING
+const testing_frame = defaultFrames1.map((frame) => ({
+  id: generateId(),
+  title: frame.name,
+  description: frame.description,
+  long_description: frame.long_description,
+  items: [],
+}));

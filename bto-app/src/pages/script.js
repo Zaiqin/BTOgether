@@ -1,14 +1,20 @@
 const handleScrollAnimation = () => {
   const revealElements = () => {
+    const anim1Elements = document.querySelectorAll(".anim-1");
+    if (!anim1Elements.length) {
+      console.error("No elements with class .anim-1 found");
+      return;
+    }
+
     const anim2Elements = document.querySelectorAll(".anim-2");
     if (!anim2Elements.length) {
       console.error("No elements with class .anim-2 found");
       return;
     }
 
-    const anim1Elements = document.querySelectorAll(".anim-1");
-    if (!anim1Elements.length) {
-      console.error("No elements with class .anim-1 found");
+    const anim3Elements = document.querySelectorAll(".anim-3");
+    if (!anim3Elements.length) {
+      console.error("No elements with class .anim-3 found");
       return;
     }
 
@@ -29,6 +35,17 @@ const handleScrollAnimation = () => {
     });
 
     anim2Elements.forEach((element) => {
+      const elementPosition = element.offsetTop;
+      if (scrollPosition > elementPosition) {
+        // console.log(scrollPosition)
+        // console.log(elementPosition)
+        element.classList.add("animate");
+      } else {
+        element.classList.remove("animate");
+      }
+    });
+
+    anim3Elements.forEach((element) => {
       const elementPosition = element.offsetTop;
       if (scrollPosition > elementPosition) {
         // console.log(scrollPosition)

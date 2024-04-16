@@ -25,15 +25,8 @@ const LoginPage = ({ user }) => {
           className="app-logo"
           style={{ width: "60px", height: "60px", borderRadius: "5px" }}
         />
-        <div className="options">
-          {/* <a className="homepage-link" href>Homepage</a> */}
-          {/* <a className="login-link" href>Login</a> */}
-        </div>
+        <div className="title-heading-login-page">BTOgether</div>
       </div>
-
-      {/* <div className="welcome-section">
-        <h1>Welcome to BTOgether</h1>
-      </div> */}
 
       <div className="title-and-box">
         <div className="title-and-sign-up">
@@ -48,8 +41,6 @@ const LoginPage = ({ user }) => {
               Don't have an account? Register here
             </a>
           )}
-          {/* <p className="register-prefix">Or <a className="register-link" href>register for a new account</a>
-            </p> */}
         </div>
 
         <div className="login-page-wrapper">
@@ -60,9 +51,6 @@ const LoginPage = ({ user }) => {
           )}
         </div>
       </div>
-
-      {/* {isSignUpActive && <a className='loginpage-redirect' onClick={handleMethodChange}>Login</a>}
-      {!isSignUpActive && (<a className='registerpage-redirect' onClick={handleMethodChange}>Dont have an account? Create here</a>)} */}
     </div>
   );
 };

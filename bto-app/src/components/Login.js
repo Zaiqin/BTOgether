@@ -45,7 +45,7 @@ const Login = ({ user }) => {
           Email
         </label>
         <input
-          className="email-label input"
+          className="email-label login-input"
           type="text"
           id="email"
           onChange={handleEmailChange}
@@ -57,7 +57,7 @@ const Login = ({ user }) => {
           Password
         </label>
         <input
-          className="password-input input"
+          className="password-input login-input"
           type="password"
           id="password"
           onChange={handlePasswordChange}

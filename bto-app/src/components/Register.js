@@ -33,11 +33,6 @@ const SignUp = ({ user }) => {
 
   return (
     <div className="register-box">
-      {/* <form>
-          <legend>Sign Up</legend>
-
-          <fieldset> */}
-
       <div className="email">
         <label className="email-label" htmlFor="email">
           Email
@@ -55,21 +50,13 @@ const SignUp = ({ user }) => {
           Password
         </label>
         <input
-          className="password-input input"
+          className="password-input login-input"
           type="password"
           id="password"
           onChange={handlePasswordChange}
         />
       </div>
-      {/* <label htmlFor="email">Email</label>
-          <input type="text" id="email" onChange={handleEmailChange} />
-        
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            onChange={handlePasswordChange}
-          /> */}
+
       <button className="sign-in-button" type="button" onClick={handleSignUp}>
         Sign Up
       </button>
@@ -79,9 +66,6 @@ const SignUp = ({ user }) => {
       </div>
 
       <AuthGoogle user={user} />
-
-      {/* </fieldset>
-        </form> */}
     </div>
   );
 };

@@ -10,10 +10,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #000000;
+  /* border-bottom: 1px solid #000000;
   border-top: 1px solid #000000;
   border-left: 1px solid #000000;
-  border-right: 1px solid #000000;
+  border-right: 1px solid #000000; */
 }
 .panel-wrapper {
   display: flex;
@@ -21,31 +21,15 @@
 .leaflet-map,
 .LeafletMap {
   height: 70vh;
-  width: 99.9%;
 }
 
-.buttons-group button {
-  background-color: lightskyblue;
-  color: black;
-  border: none;
-  padding: 10px 15px;
-  margin: 5px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.buttons-group button:hover {
-  background-color: #3079ed;
-}
-
-input[type="text"] {
-  border: 1px solid #ddd;
-  display: inline-block;
-  padding: 10px;
-  margin: 5px;
-  width: 200px;
-  border-radius: 2px;
+.btofindtext input[type="text"] {
+  /* border: 1px solid #ddd;
+    display:inline-block;
+    padding: 10px;
+    margin: 5px; */
+  width: 100% !important;
+  /* border-radius: 2px; */
 }
 
 .location-name {
@@ -74,9 +58,9 @@ input[type="text"] {
   flex-direction: column;
   overflow: hidden;
   flex: 1;
-  border-right: 1px solid grey;
-  border-left: 1px solid grey;
-  border-bottom: 1px solid grey;
+  /* border-right: 1px solid grey;
+    border-left: 1px solid grey;
+    border-bottom: 1px solid grey; */
 }
 
 .table-container {
@@ -90,14 +74,14 @@ input[type="text"] {
   border-collapse: collapse;
 }
 
-.table-style td {
-  text-align: left;
-  padding: 1rem;
-  border: 2px solid #ddd;
-  padding: 2rem 1rem;
-  background-color: #fff;
-  margin-bottom: 2rem;
-}
+/* .table-style td {
+    text-align: left;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    padding: 2rem 1rem;
+    background-color: #fff;
+    margin-bottom: 2rem;
+  } */
 
 .table-style th {
   background-color: #f8f8f8;
@@ -111,6 +95,11 @@ input[type="text"] {
   color: grey;
   margin-top: 0.5rem;
 }
+
+.table-style__address span::after {
+  content: " ";
+}
+
 .table-style__maptitle {
   display: flex;
   align-items: center;
@@ -132,27 +121,28 @@ input[type="text"] {
 
 .right-panel {
   flex: 2;
-  border-bottom: 1px solid #000000;
-
-  border-right: 1px solid #000000;
+  /* border-bottom: 1px solid #000000;
+    
+    border-right: 1px solid #000000; */
 }
 
-.public-transport-route {
-  font-family: "Roboto", sans-serif;
-  color: #333;
-  text-align: center;
-  font-size: 16px;
-  background: #fff;
-  padding: 1rem;
-  display: flex;
-  width: 90%;
-  flex-direction: column;
-  justify-content: center;
-  transition: box-shadow 0.3s ease;
-}
+/* .public-transport-route {
+    font-family: 'Roboto', sans-serif;
+    color: #333; 
+    text-align: center;
+    font-size: 16px;
+    background: #fff; 
+    padding: 1rem;
+    display: flex;
+    width: 90%;
+    flex-direction: column;
+    justify-content: center;
+    transition: box-shadow 0.3s ease; 
+} */
 
 .distance-slider {
   color: #333;
+  margin-left: 5px;
 }
 
 .public-transport-route:hover {
@@ -166,6 +156,17 @@ input[type="text"] {
 
 .coordinates-display {
   margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.info-section {
+  color: gray;
+  display: "flex";
+  font-family: Cabin, Helvetica Neue, Helvetica, Arial, sans-serif;
+  height: "100%";
+  text-align: center;
+  justify-content: center;
+  padding-top: 10px;
 }
 
 .App-logo {

@@ -6,14 +6,16 @@
 /* Navbar styles */
 .navbar {
   background-color: #f7776b;
-  padding: 20px;
   display: flex;
   align-items: center;
   max-width: 100%;
   margin: 0 auto;
   border-bottom: 1px solid #f7776b;
   position: relative;
+  font-family: "Inter", Helvetica, Arial, sans-serif;
   /* Add this line */
+  z-index: 2;
+  padding-right: 20px;
 }
 
 .navbar .title-heading {
@@ -70,5 +72,3 @@
     margin-left: auto;
   }
 }
-
-/* Your existing CSS */
