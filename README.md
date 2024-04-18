@@ -3,7 +3,7 @@
 <br/>
 
 [![My Skills](https://skillicons.dev/icons?i=react,firebase,tailwind,mui,vercel,html,css,js,github,npm,vscode&theme=dark)](https://skillicons.dev)
-&nbsp;&nbsp;<img src="https://www.gstatic.com/lamda/images/favicon_v1_150160cddff7f294ce30.svg" width="35px" alt="Gemini Icon" />
+&nbsp;&nbsp;<img src="https://www.gstatic.com/lamda/images/favicon_v1_150160cddff7f294ce30.svg" width="48px" height="48px" alt="Gemini Icon" />&nbsp;&nbsp;<img src="https://avatars.githubusercontent.com/u/12876026?s=200&v=4" width="48px" height="48px" alt="Pexels Icon" />
 
 In the project directory, you can run:
 
