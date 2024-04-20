@@ -50,14 +50,11 @@ To run BTOgether locally, follow these steps:
 Alternatively, you can access the live version of BTOgether hosted on Vercel [here](https://btogether-zq.vercel.app/).
 
 ## Contributors
-<div style="display:flex; align-items:center; margin-bottom: 10px;"><img src="https://avatars.githubusercontent.com/J0Jing" width="40" height="40" style="border-radius:50%"> <div style="margin-left: 10px;"><a href="https://github.com/J0Jing" style="text-align: center; display: block;">O Jing</a></div></div>
-
-<div style="display:flex; align-items:center; margin-bottom: 10px;"><img src="https://avatars.githubusercontent.com/Zaiqin" width="40" height="40" style="border-radius:50%"> <div style="margin-left: 10px;"><a href="https://github.com/Zaiqin" style="text-align: center; display: block;">Zai Qin</a></div></div>
-
-<div style="display:flex; align-items:center; margin-bottom: 10px;"><img src="https://avatars.githubusercontent.com/TorDij" width="40" height="40" style="border-radius:50%"> <div style="margin-left: 10px;"><a href="https://github.com/TorDij" style="text-align: center; display: block;">Torrey</a></div></div>
-
-<div style="display:flex; align-items:center; margin-bottom: 10px;"><img src="https://avatars.githubusercontent.com/paaronoia" width="40" height="40" style="border-radius:50%"> <div style="margin-left: 10px;"><a href="https://github.com/paaronoia" style="text-align: center; display: block;">Aaron</a></div></div>
-
-<div style="display:flex; align-items:center; margin-bottom: 10px;"><img src="https://avatars.githubusercontent.com/kyew003" width="40" height="40" style="border-radius:50%"> <div style="margin-left: 10px;"><a href="https://github.com/kyew003" style="text-align: center; display: block;">Kenneth</a></div></div>
-
-<div style="display:flex; align-items:center; margin-bottom: 10px;"><img src="https://avatars.githubusercontent.com/xGokull" width="40" height="40" style="border-radius:50%"> <div style="margin-left: 10px;"><a href="https://github.com/xGokull" style="text-align: center; display: block;">Gokul</a></div></div>
+| User ||Role|||
+|-|-|-|-|-|
+|<img src="https://avatars.githubusercontent.com/J0Jing" width="40" height="40" style="border-radius:50%">|<a href="https://github.com/J0Jing" style="text-align: center; display: block;">O Jing</a>|Team Leader, Frontend Developer
+|<img src="https://avatars.githubusercontent.com/Zaiqin" width="40" height="40" style="border-radius:50%">|<a href="https://github.com/Zaiqin" style="text-align: center; display: block;">Zai Qin</a>|Fullstack Developer
+|<img src="https://avatars.githubusercontent.com/TorDij" width="40" height="40" style="border-radius:50%">|<a href="https://github.com/TorDij" style="text-align: center; display: block;">Torrey</a>|Frontend Developer
+|<img src="https://avatars.githubusercontent.com/paaronoia" width="40" height="40" style="border-radius:50%">|<a href="https://github.com/paaronoia" style="text-align: center; display: block;">Aaron</a>|Frontend Developer
+|<img src="https://avatars.githubusercontent.com/kyew003" width="40" height="40" style="border-radius:50%">|<a href="https://github.com/kyew003" style="text-align: center; display: block;">Kenneth</a>|Backend Developer
+|<img src="https://avatars.githubusercontent.com/xGokull" width="40" height="40" style="border-radius:50%">|<a href="https://github.com/xGokull" style="text-align: center; display: block;">Gokul</a>|Frontend Developer
