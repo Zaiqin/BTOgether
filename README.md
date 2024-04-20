@@ -9,7 +9,6 @@
 - **Dashboard**: BTOgether offers a user-friendly dashboard where users can access essential information such as location, town council details, estimated date of completion, and more, providing a clear and concise view of each BTO property. Furthermore, users can conduct side-by-side comparisons of the BTOs they have shortlisted, facilitating a comprehensive evaluation process.
 - **BTO Planner**: BTOgether provides users with a comprehensive resource hub featuring common FAQs about BTO, addressing key enquiries and concerns users may encounter throughout their journey. Additionally, it includes a dynamic timeline that tracks user’s progress through the various stages, offering reassurance to users that they are on the right track.
 
-
 ## Technologies
 [![My Skills](https://skillicons.dev/icons?i=react,firebase,tailwind,mui,vercel,html,css,js,github,npm,vscode&theme=dark)](https://skillicons.dev)
 &nbsp;&nbsp;<img src="https://www.gstatic.com/lamda/images/favicon_v1_150160cddff7f294ce30.svg" width="48px" height="48px" alt="Gemini Icon" />&nbsp;&nbsp;<img src="https://avatars.githubusercontent.com/u/12876026?s=200&v=4" width="48px" height="48px" alt="Pexels Icon" />
@@ -48,6 +47,9 @@ To run BTOgether locally, follow these steps:
 5. Open http://localhost:3000 in your web browser to view the application.
 
 Alternatively, you can access the live version of BTOgether hosted on Vercel [here](https://btogether-zq.vercel.app/).
+
+## Usage:
+It is intended for use within a website environment only.
 
 ## Contributors
 |Member|Role|
