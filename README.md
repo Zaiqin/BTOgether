@@ -1,18 +1,56 @@
 # BTOgether
-<h3>BTOgether, is a web application that aims to simplify the BTO housing journey in Singapore, offering a seamless and user-friendly experience that guides users, particularly couples and young adults seeking to embark on their homeownership journey, through every step of the application process.</h3>
-<br/>
 
+<h3>BTOgether, is a web application that aims to simplify the BTO housing journey in Singapore, offering a seamless and user-friendly experience that guides users, particularly couples and young adults seeking to embark on their homeownership journey, through every step of the application process.</h3>
+
+![image](https://github.com/J0JIng/BTOgether/assets/111691710/ba4c7d37-5d9d-4e96-a354-bf4cc36faeeb)
+
+## Technologies Used
 [![My Skills](https://skillicons.dev/icons?i=react,firebase,tailwind,mui,vercel,html,css,js,github,npm,vscode&theme=dark)](https://skillicons.dev)
 &nbsp;&nbsp;<img src="https://www.gstatic.com/lamda/images/favicon_v1_150160cddff7f294ce30.svg" width="48px" height="48px" alt="Gemini Icon" />&nbsp;&nbsp;<img src="https://avatars.githubusercontent.com/u/12876026?s=200&v=4" width="48px" height="48px" alt="Pexels Icon" />
 
-In the project directory, you can run:
+BTOgether is built using a stack of modern technologies, including:
+> Frontend
 
-```npm install```
-installs all the dependency in the node_modules.
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![MUI](https://img.shields.io/badge/MUI-%230081CB.svg?style=for-the-badge&logo=mui&logoColor=white)
+- **HTML5, CSS3, JavaScript**: Fundamental web technologies powering the application.
+- **React**: For building the frontend user interface.
+- **Material-UI (MUI)**: For additional UI components and design elements.
+- **Tailwind CSS**: For efficient and responsive styling.
+- **Pexel API**: Providing visually appealing icons for enhanced user experience.
+> Back-end
 
-```npm start```
-Runs the app in the development mode.
-Open http://localhost:3000 to view it in the browser.
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
+![Gemini](https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=googlebard&logoColor=fff)
+- **Firebase**: For backend services like authentication and database management.
+- **Gemini**: For providing useful descriptions about a particular topic and subject.
+- **Vercel**: For hosting the website and ensuring fast deployment and reliability.
 
-Alternatively, you may choose to view the website hosted on Vercel:
-https://btogether-zq.vercel.app/
+## Core Features
+- **BTO Find**: BTOgether allows users to explore nearby facilities related to each BTO location as well as the public transport route they can take to these facilities.
+- **Dashboard**: BTOgether offers a user-friendly dashboard where users can access essential information such as location, town council details, estimated date of completion, and more, providing a clear and concise view of each BTO property. Furthermore, users can conduct side-by-side comparisons of the BTOs they have shortlisted, facilitating a comprehensive evaluation process.
+- **BTO Planner**: BTOgether provides users with a comprehensive resource hub featuring common FAQs about BTO, addressing key enquiries and concerns users may encounter throughout their journey. Additionally, it includes a dynamic timeline that tracks user’s progress through the various stages, offering reassurance to users that they are on the right track.
+
+
+## Getting Started
+To run BTOgether locally, follow these steps:
+
+1. Clone this repository to your local machine.
+2. Navigate to the project directory.
+3. Run `npm install` to install all dependencies.
+4. Execute `npm start` to run the app in development mode.
+5. Open http://localhost:3000 in your web browser to view the application.
+
+Alternatively, you can access the live version of BTOgether hosted on Vercel [here](https://btogether-zq.vercel.app/).
+
+## Contributors
+- **[O Jing]**: Project Lead & Frontend Developer
+- **[Zai Qin]**: Fullstack Developer
+- **[Torrey]**: Frontend Developer
+- **[Aaron]**: Frontend Developer
+- **[Kenneth]**: Backend Developer
+- **[Gokul]**: Frontend Developer
