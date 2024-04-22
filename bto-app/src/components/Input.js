@@ -1,4 +1,5 @@
 import "../css/global.css";
+import "../css/dashboard.css";
 import React, { useState, useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
@@ -21,6 +22,10 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [distance, setDistance] = useState(5);
   const [addressField, setAddressField] = useState("");
+  const [destGeoCode, setDestGeoCode] = useState({
+    latitude: null,
+    longitude: null,
+  });
 
   const Transportation = ["Select an option", "Car", "Public Transport"];
 
@@ -55,6 +60,7 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
       optionSelected,
       distance,
       addressField,
+      destGeoCode,
     }); // Pass an object with both values
   };
 
@@ -65,6 +71,7 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
       optionSelected: event.target.value,
       distance,
       addressField,
+      destGeoCode,
     });
   };
 
@@ -100,6 +107,12 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
           longitude <= singaporeBounds.east
         ) {
           setErrorMessage(null);
+          setDestGeoCode({
+            latitude: latitude,
+            longitude: longitude,
+          });
+
+          console.log("New destination" + JSON.stringify(destGeoCode));
         } else {
           setErrorMessage(
             "The location of is outside Singapore. Please refine your search."
@@ -117,10 +130,21 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
     return null;
   };
 
+  useEffect(() => {
+    console.log("New destination", destGeoCode);
+    onChange({
+      selected,
+      optionSelected,
+      distance,
+      addressField,
+      destGeoCode,
+    });
+  }, [destGeoCode]);
+
   const renderAddressInput = () => {
     if (selected === "Transportation" && viewSelected) {
       return (
-        <div className="mt-2">
+        <div className="modal mt-2 ">
           <input
             type="text"
             placeholder="Enter address. Press L-Shift to confirm"
@@ -135,6 +159,7 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
             }}
             className="w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+          <p style={{fontSize: "13px", fontStyle: "italic"}}>Press L-Shift in the address field above to confirm</p>
         </div>
       );
     }
@@ -149,7 +174,7 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
             <h3>Filter Distance (in km): {distance} km</h3>
             <Slider
               aria-label="Restricted values"
-              defaultValue={1}
+              defaultValue={5}
               step={1}
               min={1}
               max={10}
@@ -173,6 +198,7 @@ const Input = ({ name, defaultValue, placeholder, onChange }) => {
                   optionSelected,
                   distance: e.target.value,
                   addressField,
+                  destGeoCode,
                 });
               }}
               sx={{ color: "#f7776b" }}
